@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{73465FDE-5D1D-4AA5-AE75-8ADD66E5ECB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeeklyPlanTracker.Core", "src\WeeklyPlanTracker.Core\WeeklyPlanTracker.Core.csproj", "{5B50C6FA-C137-4515-AA05-C4A03F641C7F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeeklyPlanTracker.Infrastructure", "src\WeeklyPlanTracker.Infrastructure\WeeklyPlanTracker.Infrastructure.csproj", "{C7C6F167-8B1B-42E3-BEA8-52F8B6F1AB17}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeeklyPlanTracker.API", "src\WeeklyPlanTracker.API\WeeklyPlanTracker.API.csproj", "{10D4EC5E-5551-4978-BA1C-5DC949E9548E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DE884173-8AA0-4325-929D-8C54AFC61438}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeeklyPlanTracker.UnitTests", "tests\WeeklyPlanTracker.UnitTests\WeeklyPlanTracker.UnitTests.csproj", "{3F3EED32-E8D8-4C91-BE4E-EAD3EC955EF4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeeklyPlanTracker.IntegrationTests", "tests\WeeklyPlanTracker.IntegrationTests\WeeklyPlanTracker.IntegrationTests.csproj", "{5837A121-C028-4A9F-99EE-8CE4BA1B9964}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5B50C6FA-C137-4515-AA05-C4A03F641C7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B50C6FA-C137-4515-AA05-C4A03F641C7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B50C6FA-C137-4515-AA05-C4A03F641C7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B50C6FA-C137-4515-AA05-C4A03F641C7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7C6F167-8B1B-42E3-BEA8-52F8B6F1AB17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7C6F167-8B1B-42E3-BEA8-52F8B6F1AB17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7C6F167-8B1B-42E3-BEA8-52F8B6F1AB17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7C6F167-8B1B-42E3-BEA8-52F8B6F1AB17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10D4EC5E-5551-4978-BA1C-5DC949E9548E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10D4EC5E-5551-4978-BA1C-5DC949E9548E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10D4EC5E-5551-4978-BA1C-5DC949E9548E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10D4EC5E-5551-4978-BA1C-5DC949E9548E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F3EED32-E8D8-4C91-BE4E-EAD3EC955EF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F3EED32-E8D8-4C91-BE4E-EAD3EC955EF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F3EED32-E8D8-4C91-BE4E-EAD3EC955EF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F3EED32-E8D8-4C91-BE4E-EAD3EC955EF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5837A121-C028-4A9F-99EE-8CE4BA1B9964}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5837A121-C028-4A9F-99EE-8CE4BA1B9964}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5837A121-C028-4A9F-99EE-8CE4BA1B9964}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5837A121-C028-4A9F-99EE-8CE4BA1B9964}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5B50C6FA-C137-4515-AA05-C4A03F641C7F} = {73465FDE-5D1D-4AA5-AE75-8ADD66E5ECB4}
+		{C7C6F167-8B1B-42E3-BEA8-52F8B6F1AB17} = {73465FDE-5D1D-4AA5-AE75-8ADD66E5ECB4}
+		{10D4EC5E-5551-4978-BA1C-5DC949E9548E} = {73465FDE-5D1D-4AA5-AE75-8ADD66E5ECB4}
+		{3F3EED32-E8D8-4C91-BE4E-EAD3EC955EF4} = {DE884173-8AA0-4325-929D-8C54AFC61438}
+		{5837A121-C028-4A9F-99EE-8CE4BA1B9964} = {DE884173-8AA0-4325-929D-8C54AFC61438}
+	EndGlobalSection
+EndGlobal
