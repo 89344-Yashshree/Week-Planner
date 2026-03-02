@@ -1,0 +1,48 @@
+## .NET Build Artifacts
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+## NuGet
+packages/
+*.nupkg
+*.snupkg
+
+## Logs
+*.log
+*.tmp
+
+## EF Migrations (keep the migrations folder but not snapshots if desired)
+# Uncomment if you want to skip migrations from source control:
+# **/Migrations/
+
+## Test Results
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+## Angular Build Artifacts
+client/dist/
+client/.angular/
+client/node_modules/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## VS Code
+.vscode/
+
+## JetBrains
+.idea/
+
+## Temp
+build_output.txt
