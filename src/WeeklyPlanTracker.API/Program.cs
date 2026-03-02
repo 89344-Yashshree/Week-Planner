@@ -1,0 +1,74 @@
+using Microsoft.EntityFrameworkCore;
+using WeeklyPlanTracker.API.Middleware;
+using WeeklyPlanTracker.Core.Services;
+using WeeklyPlanTracker.Infrastructure;
+using WeeklyPlanTracker.Infrastructure.Data;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ── Services ──────────────────────────────────────────────────────────────────
+
+// Infrastructure (EF Core, repositories, UnitOfWork)
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// Core business services
+builder.Services.AddScoped<TeamService>();
+builder.Services.AddScoped<BacklogService>();
+builder.Services.AddScoped<PlanningService>();
+builder.Services.AddScoped<ProgressService>();
+builder.Services.AddScoped<DataService>();
+
+// Controllers + JSON options (serialize enums as strings)
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+
+// Swagger / OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "Weekly Plan Tracker API", Version = "v1" });
+});
+
+// CORS — allow Angular dev server and production origin
+builder.Services.AddCors(opts =>
+{
+    opts.AddDefaultPolicy(policy => policy
+        .WithOrigins(
+            "http://localhost:4200",   // Angular dev server
+            "https://localhost:4200")
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+});
+
+var app = builder.Build();
+
+// ── Middleware pipeline ───────────────────────────────────────────────────────
+
+// Global exception handler — must be first
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Weekly Plan Tracker v1"));
+}
+
+app.UseHttpsRedirection();
+app.UseCors();
+app.MapControllers();
+
+// ── Auto-migrate database on startup (development convenience) ─────────────────
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
+
+await app.RunAsync();
+
+// Expose Program for WebApplicationFactory in integration tests
+public partial class Program { }
