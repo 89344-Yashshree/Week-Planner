@@ -57,15 +57,26 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Weekly Plan Tracker v1"));
 }
 
-app.UseHttpsRedirection();
+// CORS must come before HTTPS redirect so headers are present on redirect responses
 app.UseCors();
+
+// Only apply HTTPS redirect for real deployments (not when using in-memory DB in integration tests)
+using (var detectScope = app.Services.CreateScope())
+{
+    var detectDb = detectScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (detectDb.Database.IsRelational())
+        app.UseHttpsRedirection();
+}
 app.MapControllers();
 
-// ── Auto-migrate database on startup (development convenience) ─────────────────
+// ── Auto-migrate database on startup (skipped for in-memory / test environments) ───
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+    if (db.Database.IsRelational())
+        await db.Database.MigrateAsync();
+    else
+        await db.Database.EnsureCreatedAsync();   // supports in-memory provider used in integration tests
 }
 
 await app.RunAsync();
