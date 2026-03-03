@@ -15,6 +15,7 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
+  AZURE_WEBAPP_NAME: weekplanner-api
 
 jobs:
   # ── CI: Build + Test ────────────────────────────────────────────────────────
@@ -85,10 +86,18 @@ jobs:
           --configuration Release
           --output ./publish
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Zip publish output
+        run: zip -r publish.zip publish/
+
+      - name: Login to Azure
+        uses: azure/login@v2
         with:
-          app-name: weekplanner-api
-          slot-name: production
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./publish
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        run: |
+          az webapp deploy \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group WeekPlanner-RG \
+            --src-path publish.zip \
+            --type zip
