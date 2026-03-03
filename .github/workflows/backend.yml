@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'WeeklyPlanTracker.sln'
       - '.github/workflows/backend.yml'
   pull_request:
     branches: [main]
@@ -14,7 +15,6 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  WORKING_DIR: ./backend/src/WeeklyPlanTracker.API
 
 jobs:
   # ── CI: Build + Test ────────────────────────────────────────────────────────
@@ -32,39 +32,35 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore
-        working-directory: ./backend
+        run: dotnet restore WeeklyPlanTracker.sln
 
       - name: Build solution
-        run: dotnet build --no-restore --configuration Release
-        working-directory: ./backend
+        run: dotnet build WeeklyPlanTracker.sln --no-restore --configuration Release
 
       - name: Run Unit Tests
         run: >
           dotnet test
-          tests/WeeklyPlanTracker.UnitTests/WeeklyPlanTracker.UnitTests.csproj
+          backend/tests/WeeklyPlanTracker.UnitTests/WeeklyPlanTracker.UnitTests.csproj
           --no-build
           --configuration Release
           --logger "trx;LogFileName=unit-test-results.trx"
           --results-directory ./test-results
-        working-directory: ./backend
 
       - name: Run Integration Tests
         run: >
           dotnet test
-          tests/WeeklyPlanTracker.IntegrationTests/WeeklyPlanTracker.IntegrationTests.csproj
+          backend/tests/WeeklyPlanTracker.IntegrationTests/WeeklyPlanTracker.IntegrationTests.csproj
           --no-build
           --configuration Release
           --logger "trx;LogFileName=integration-test-results.trx"
           --results-directory ./test-results
-        working-directory: ./backend
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
-          path: backend/test-results/*.trx
+          path: test-results/*.trx
 
   # ── CD: Publish + Deploy (main branch only) ─────────────────────────────────
   deploy:
@@ -82,13 +78,12 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore & Publish
+      - name: Publish
         run: >
           dotnet publish
-          src/WeeklyPlanTracker.API/WeeklyPlanTracker.API.csproj
+          backend/src/WeeklyPlanTracker.API/WeeklyPlanTracker.API.csproj
           --configuration Release
           --output ./publish
-        working-directory: ./backend
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -96,4 +91,4 @@ jobs:
           app-name: weekplanner-api
           slot-name: production
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./backend/publish
+          package: ./publish

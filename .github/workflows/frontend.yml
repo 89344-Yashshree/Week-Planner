@@ -16,14 +16,17 @@ env:
   NODE_VERSION: '20.x'
 
 jobs:
-  # ── CI: Install + Build ──────────────────────────────────────────────────────
-  build:
-    name: Build Angular App
+  # ── CI + CD combined via Azure Static Web Apps action ───────────────────────
+  build_and_deploy:
+    name: Build and Deploy Angular App
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
 
       - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
@@ -36,40 +39,7 @@ jobs:
         run: npm ci
         working-directory: ./frontend
 
-      - name: Build production bundle
-        run: npm run build -- --configuration production
-        working-directory: ./frontend
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        with:
-          name: frontend-dist
-          path: frontend/dist/
-
-  # ── CD: Deploy to Azure Static Web Apps (main branch only) ──────────────────
-  deploy:
-    name: Deploy to Azure Static Web Apps
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: ./frontend
-
-      - name: Build production bundle
+      - name: Build Angular app
         run: npm run build -- --configuration production
         working-directory: ./frontend
 
@@ -79,5 +49,6 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: /frontend
-          output_location: dist/client
+          skip_app_build: true
+          app_location: /frontend/dist/client/browser
+          output_location: ''
