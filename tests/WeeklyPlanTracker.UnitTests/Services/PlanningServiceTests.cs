@@ -127,7 +127,9 @@ public class PlanningServiceTests
 
         _plans.Setup(p => p.GetByIdAsync(plan.Id)).ReturnsAsync(plan);
         _assignments.Setup(a => a.GetByMemberItemAndWeekAsync(memberId, itemId, plan.Id)).ReturnsAsync((PlanAssignment?)null);
-        _uow.Setup(u => u.BacklogItems).Returns(Mock.Of<IBacklogItemRepository>(r => r.GetByIdAsync(itemId) == Task.FromResult<BacklogItem?>(item)));
+        var backlogRepoMock = new Mock<IBacklogItemRepository>();
+        backlogRepoMock.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
+        _uow.Setup(u => u.BacklogItems).Returns(backlogRepoMock.Object);
         _assignments.Setup(a => a.GetTotalCommittedHoursAsync(memberId, plan.Id)).ReturnsAsync(28); // only 2h left
         _assignments.Setup(a => a.GetByWeekAsync(plan.Id)).ReturnsAsync(new List<PlanAssignment>());
 
