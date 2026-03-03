@@ -39,7 +39,8 @@ builder.Services.AddCors(opts =>
     opts.AddDefaultPolicy(policy => policy
         .WithOrigins(
             "http://localhost:4200",   // Angular dev server
-            "https://localhost:4200")
+            "https://localhost:4200",
+            "https://nice-ocean-00beb6100.6.azurestaticapps.net")  // Azure Static Web App
         .AllowAnyHeader()
         .AllowAnyMethod());
 });
