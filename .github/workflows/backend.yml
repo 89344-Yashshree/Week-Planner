@@ -1,0 +1,99 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  WORKING_DIR: ./backend/src/WeeklyPlanTracker.API
+
+jobs:
+  # ── CI: Build + Test ────────────────────────────────────────────────────────
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./backend
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+        working-directory: ./backend
+
+      - name: Run Unit Tests
+        run: >
+          dotnet test
+          tests/WeeklyPlanTracker.UnitTests/WeeklyPlanTracker.UnitTests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=unit-test-results.trx"
+          --results-directory ./test-results
+        working-directory: ./backend
+
+      - name: Run Integration Tests
+        run: >
+          dotnet test
+          tests/WeeklyPlanTracker.IntegrationTests/WeeklyPlanTracker.IntegrationTests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=integration-test-results.trx"
+          --results-directory ./test-results
+        working-directory: ./backend
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: backend/test-results/*.trx
+
+  # ── CD: Publish + Deploy (main branch only) ─────────────────────────────────
+  deploy:
+    name: Deploy to Azure Web App
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore & Publish
+        run: >
+          dotnet publish
+          src/WeeklyPlanTracker.API/WeeklyPlanTracker.API.csproj
+          --configuration Release
+          --output ./publish
+        working-directory: ./backend
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: weekplanner-api
+          slot-name: production
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./backend/publish
