@@ -68,14 +68,20 @@ using (var detectScope = app.Services.CreateScope())
 }
 app.MapControllers();
 
-// ── Auto-migrate database on startup (skipped for in-memory / test environments) ───
-await using (var scope = app.Services.CreateAsyncScope())
+// ── Auto-migrate database on startup (with timeout to prevent hanging on Azure) ───
+try
 {
+    using var migrationCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+    await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     if (db.Database.IsRelational())
-        await db.Database.MigrateAsync();
+        await db.Database.MigrateAsync(migrationCts.Token);
     else
-        await db.Database.EnsureCreatedAsync();   // supports in-memory provider used in integration tests
+        await db.Database.EnsureCreatedAsync(migrationCts.Token);
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Database migration failed on startup — app will start without migration");
 }
 
 await app.RunAsync();
