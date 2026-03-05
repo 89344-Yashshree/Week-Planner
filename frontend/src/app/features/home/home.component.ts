@@ -160,7 +160,7 @@ export class HomeComponent implements OnInit {
                 danger: true
             });
             if (!ok) return;
-            this.planService.cancel(this.currentPlan.id).subscribe({
+            this.planService.cancel(this.currentPlan!.id).subscribe({
                 next: () => { this.toast.show("This week's planning has been cancelled.", 'warning'); this.ngOnInit(); },
                 error: e => this.toast.show(e.error?.error || 'Failed to cancel.', 'error')
             });

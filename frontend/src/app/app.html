@@ -1,1 +1,51 @@
-<router-outlet />
+<div class="app-wrapper">
+
+  <!-- Global Confirm Dialog -->
+  <app-confirm-dialog />
+
+  <!-- Navbar -->
+  <nav class="navbar" *ngIf="user">
+    <span class="navbar-brand">📅 Week Planner</span>
+    <div class="navbar-links">
+      <a (click)="router.navigate(['/home'])" class="nav-link" id="nav-home">🏠 Home</a>
+      <a (click)="router.navigate(['/backlog'])" class="nav-link" id="nav-backlog">Backlog</a>
+      <a *ngIf="isLead" (click)="router.navigate(['/manage-members'])" class="nav-link" id="nav-team">Team</a>
+      <a (click)="router.navigate(['/past-weeks'])" class="nav-link" id="nav-past">Past Weeks</a>
+    </div>
+    <div class="navbar-right">
+      <span class="nav-user">{{ user.name }}</span>
+      <span class="badge" [class.badge-lead]="isLead" [class.badge-member]="!isLead">
+        {{ isLead ? 'Lead' : 'Member' }}
+      </span>
+      <button class="btn btn-sm btn-secondary" (click)="logout()" id="switch-user-btn">🔄 Switch</button>
+      <button class="btn btn-sm btn-outline" (click)="toggleTheme()" id="theme-toggle-btn">
+        {{ isDark ? 'Light Mode' : 'Dark Mode' }}
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <router-outlet />
+  </main>
+
+  <!-- Footer Utility Bar (hidden on /setup) -->
+  <footer class="footer-bar" *ngIf="!router.url.includes('/setup')">
+    <button class="btn btn-outline" id="footer-download-btn" (click)="downloadData()">📥 Download My Data</button>
+    <button class="btn btn-outline" id="footer-load-btn" (click)="fileInput.click()">📤 Load Data from File</button>
+    <input #fileInput type="file" accept=".json" style="display:none" (change)="onFileSelected($event)"
+      id="file-import-input" />
+    <button class="btn btn-outline" id="footer-seed-btn" (click)="openSeedConfirm()">🌱 Seed Sample Data</button>
+    <button class="btn btn-danger" id="footer-reset-btn" (click)="openResetConfirm()">🗑️ Reset App</button>
+  </footer>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container">
+    <div class="toast" *ngFor="let t of toasts" [class.toast-success]="t.type === 'success'"
+      [class.toast-warning]="t.type === 'warning'" [class.toast-error]="t.type === 'error'">
+      {{ t.message }}
+      <button class="toast-close" (click)="toastService.dismiss(t.id)">×</button>
+    </div>
+  </div>
+
+</div>

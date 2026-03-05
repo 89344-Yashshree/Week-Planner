@@ -1,62 +1,33 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ConfirmService } from '../services/confirm.service';
+import { CommonModule, AsyncPipe } from '@angular/common';
+import { ConfirmService, ConfirmConfig } from '../services/confirm.service';
 
 /** Global confirmation dialog — place once in AppComponent template. */
 @Component({
     selector: 'app-confirm-dialog',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, AsyncPipe],
     template: `
-    <div class="modal-backdrop" *ngIf="svc.config()" (click)="svc.cancel()">
-      <div class="modal-box" (click)="$event.stopPropagation()" id="confirm-dialog">
-        <h3 id="confirm-title">{{ svc.config()?.title }}</h3>
-        <p id="confirm-body">{{ svc.config()?.message }}</p>
-        <div class="modal-actions">
-          <button id="confirm-cancel-btn" class="btn btn-secondary" (click)="svc.cancel()">
-            {{ svc.config()?.cancelLabel || 'Cancel' }}
-          </button>
-          <button id="confirm-ok-btn" class="btn"
-                  [class.btn-danger]="svc.config()?.danger"
-                  [class.btn-primary]="!svc.config()?.danger"
-                  (click)="svc.confirm()">
-            {{ svc.config()?.confirmLabel || 'Confirm' }}
-          </button>
+    <ng-container *ngIf="svc.config$ | async as cfg">
+      <div class="modal-backdrop" (click)="svc.cancel()">
+        <div class="modal-box" (click)="$event.stopPropagation()" id="confirm-dialog">
+          <h3 id="confirm-title">{{ cfg.title }}</h3>
+          <p id="confirm-body">{{ cfg.message }}</p>
+          <div class="modal-actions">
+            <button id="confirm-cancel-btn" class="btn btn-secondary" (click)="svc.cancel()">
+              {{ cfg.cancelLabel || 'Cancel' }}
+            </button>
+            <button id="confirm-ok-btn" class="btn"
+                    [class.btn-danger]="cfg.danger"
+                    [class.btn-primary]="!cfg.danger"
+                    (click)="svc.confirm()">
+              {{ cfg.confirmLabel || 'Confirm' }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  `,
-    styles: [`
-    .confirm-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      animation: fadeIn 0.15s ease;
-    }
-    .confirm-box {
-      background: #1e1e2e;
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 16px;
-      padding: 2rem;
-      width: 100%; max-width: 420px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
-      animation: slideUp 0.2s ease;
-    }
-    .confirm-title {
-      font-size: 1.2rem; font-weight: 700;
-      color: #f4f4f5; margin: 0 0 0.5rem;
-    }
-    .confirm-message {
-      color: #a1a1aa; font-size: 0.95rem;
-      margin: 0 0 1.5rem; line-height: 1.5;
-    }
-    .confirm-actions {
-      display: flex; gap: 0.75rem; justify-content: flex-end;
-    }
-    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-    @keyframes slideUp { from { transform: translateY(20px); opacity:0 } to { transform: translateY(0); opacity:1 } }
-  `]
+    </ng-container>
+  `
 })
 export class ConfirmDialogComponent {
     svc = inject(ConfirmService);

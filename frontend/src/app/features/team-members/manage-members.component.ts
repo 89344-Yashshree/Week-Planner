@@ -92,8 +92,12 @@ export class ManageMembersComponent implements OnInit {
     });
     if (!ok) return;
     this.teamService.remove(member.id).subscribe({
-      next: () => { this.members = this.members.filter(m => m.id !== member.id); },
+      next: () => {
+        this.members = this.members.filter(m => m.id !== member.id);
+        this.toast.show(`${member.name} has been removed.`, 'success');
+      },
       error: e => this.toast.show(e.error?.error || 'Failed to remove member.', 'error')
     });
   }
 }
+

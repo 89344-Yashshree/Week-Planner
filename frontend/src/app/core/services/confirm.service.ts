@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 export interface ConfirmConfig {
     title: string;
@@ -10,11 +11,13 @@ export interface ConfirmConfig {
 
 @Injectable({ providedIn: 'root' })
 export class ConfirmService {
-    readonly config = signal<ConfirmConfig | null>(null);
+    private _config = new BehaviorSubject<ConfirmConfig | null>(null);
+    readonly config$ = this._config.asObservable();
+
     private resolveFn?: (value: boolean) => void;
 
     open(config: ConfirmConfig): Promise<boolean> {
-        this.config.set(config);
+        this._config.next(config);
         return new Promise(resolve => {
             this.resolveFn = resolve;
         });
@@ -22,11 +25,11 @@ export class ConfirmService {
 
     confirm(): void {
         this.resolveFn?.(true);
-        this.config.set(null);
+        this._config.next(null);
     }
 
     cancel(): void {
         this.resolveFn?.(false);
-        this.config.set(null);
+        this._config.next(null);
     }
 }

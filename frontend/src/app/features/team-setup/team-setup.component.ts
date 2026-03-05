@@ -9,13 +9,13 @@ import { MemberRole } from '../../core/enums/enums';
 
 /** First-time team setup screen. Shown when no team members exist in the system. */
 @Component({
-    selector: 'app-team-setup',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-team-setup',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="page-container">
       <div class="card setup-card">
-        <h1>👋 Welcome! Let's set up your team.</h1>
+        <h1>Welcome! Set up your team to start planning.</h1>
         <p class="subtitle">Add the people on your team. Pick one person as the Team Lead.</p>
 
         <div class="input-row">
@@ -51,48 +51,48 @@ import { MemberRole } from '../../core/enums/enums';
   `
 })
 export class TeamSetupComponent implements OnInit {
-    members: TeamMember[] = [];
-    newName = '';
-    Role = MemberRole;
+  members: TeamMember[] = [];
+  newName = '';
+  Role = MemberRole;
 
-    constructor(
-        private teamService: TeamMemberService,
-        private toast: ToastService,
-        private router: Router
-    ) { }
+  constructor(
+    private teamService: TeamMemberService,
+    private toast: ToastService,
+    private router: Router
+  ) { }
 
-    ngOnInit(): void {
-        this.teamService.getAll().subscribe(members => {
-            this.members = members;
-            if (members.length > 0) {
-                // If team already configured, go to login
-                this.router.navigate(['/login']);
-            }
-        });
-    }
-
-    addMember(): void {
-        const name = this.newName.trim();
-        if (!name) return;
-        this.teamService.add(name).subscribe({
-            next: m => {
-                this.members.push(m);
-                this.newName = '';
-            },
-            error: e => this.toast.show(e.error?.error || 'Failed to add member.', 'error')
-        });
-    }
-
-    makeLead(member: TeamMember): void {
-        this.teamService.makeLead(member.id).subscribe({
-            next: () => {
-                this.members.forEach(m => m.role = m.id === member.id ? MemberRole.Lead : MemberRole.Member);
-            },
-            error: e => this.toast.show(e.error?.error || 'Failed to update.', 'error')
-        });
-    }
-
-    done(): void {
+  ngOnInit(): void {
+    this.teamService.getAll().subscribe(members => {
+      this.members = members;
+      if (members.length > 0) {
+        // If team already configured, go to login
         this.router.navigate(['/login']);
-    }
+      }
+    });
+  }
+
+  addMember(): void {
+    const name = this.newName.trim();
+    if (!name) return;
+    this.teamService.add(name).subscribe({
+      next: m => {
+        this.members.push(m);
+        this.newName = '';
+      },
+      error: e => this.toast.show(e.error?.error || 'Failed to add member.', 'error')
+    });
+  }
+
+  makeLead(member: TeamMember): void {
+    this.teamService.makeLead(member.id).subscribe({
+      next: () => {
+        this.members.forEach(m => m.role = m.id === member.id ? MemberRole.Lead : MemberRole.Member);
+      },
+      error: e => this.toast.show(e.error?.error || 'Failed to update.', 'error')
+    });
+  }
+
+  done(): void {
+    this.router.navigate(['/login']);
+  }
 }

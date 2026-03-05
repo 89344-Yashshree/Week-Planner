@@ -4,19 +4,12 @@ import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { ToastService, Toast } from './core/services/toast.service';
 import { DataService } from './core/services/data.service';
+import { ConfirmService } from './core/services/confirm.service';
 import { TeamMember } from './core/models/team-member.model';
 import { MemberRole } from './core/enums/enums';
 import { ConfirmDialogComponent } from './core/components/confirm-dialog.component';
 
-/** Confirm modal state — controls the PRD §5.14 custom confirmation dialogs. */
-interface ConfirmState {
-  visible: boolean;
-  title: string;
-  body: string;
-  confirmLabel: string;
-  confirmClass: string;   // 'btn-primary' | 'btn-danger'
-  action: () => void;
-}
+
 
 @Component({
   selector: 'app-root',
@@ -52,8 +45,8 @@ interface ConfirmState {
         <router-outlet/>
       </main>
 
-      <!-- ── Footer Utility Bar (PRD §5.14) ───────────────── -->
-      <footer class="footer-bar">
+      <!-- ── Footer Utility Bar ───────────────────────── -->
+      <footer class="footer-bar" *ngIf="!router.url.includes('/setup')">
         <button class="btn btn-outline" id="footer-download-btn" (click)="downloadData()">📥 Download My Data</button>
         <button class="btn btn-outline" id="footer-load-btn" (click)="fileInput.click()">📤 Load Data from File</button>
         <input #fileInput type="file" accept=".json" style="display:none"
@@ -62,20 +55,7 @@ interface ConfirmState {
         <button class="btn btn-danger" id="footer-reset-btn" (click)="openResetConfirm()">🗑️ Reset App</button>
       </footer>
 
-      <!-- ── Custom Confirm Modal (PRD §5.14) ─────────────── -->
-      <div class="modal-backdrop" *ngIf="confirm.visible" (click)="confirm.visible = false">
-        <div class="modal-box" (click)="$event.stopPropagation()" id="confirm-dialog">
-          <h3 id="confirm-title">{{ confirm.title }}</h3>
-          <p id="confirm-body">{{ confirm.body }}</p>
-          <div class="modal-actions">
-            <button id="confirm-ok-btn"
-                    [class]="'btn ' + confirm.confirmClass"
-                    (click)="runConfirm()">{{ confirm.confirmLabel }}</button>
-            <button id="confirm-cancel-btn" class="btn btn-secondary"
-                    (click)="confirm.visible = false">Cancel</button>
-          </div>
-        </div>
-      </div>
+
 
       <!-- ── Toast Notifications ───────────────────────────── -->
       <div class="toast-container">
@@ -97,15 +77,11 @@ export class AppComponent implements OnInit {
   isDark = true;
   toasts: Toast[] = [];
 
-  /** Confirmation dialog state */
-  confirm: ConfirmState = {
-    visible: false, title: '', body: '', confirmLabel: '', confirmClass: '', action: () => { }
-  };
-
   constructor(
     public auth: AuthService,
     public toastService: ToastService,
     public dataService: DataService,
+    private confirmSvc: ConfirmService,
     public router: Router,
     @Inject(DOCUMENT) private document: Document
   ) { }
@@ -139,28 +115,10 @@ export class AppComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  // ── Confirm dialog helpers ────────────────────────────────────────────────
-  private openConfirm(
-    title: string, body: string,
-    confirmLabel: string, confirmClass: string,
-    action: () => void
-  ): void {
-    this.confirm = { visible: true, title, body, confirmLabel, confirmClass, action };
-  }
-
-  runConfirm(): void {
-    this.confirm.visible = false;
-    this.confirm.action();
-  }
-
   // ── Footer: Seed ──────────────────────────────────────────────────────────
   openSeedConfirm(): void {
-    this.openConfirm(
-      'Load Sample Data',
-      'This will replace all your current data with sample data. Are you sure?',
-      'Yes, Load Sample Data', 'btn-primary',
-      () => this.doSeed()
-    );
+    if (!confirm('This will replace all your current data with sample data. Are you sure?')) return;
+    this.doSeed();
   }
 
   private doSeed(): void {
@@ -175,12 +133,8 @@ export class AppComponent implements OnInit {
 
   // ── Footer: Reset ─────────────────────────────────────────────────────────
   openResetConfirm(): void {
-    this.openConfirm(
-      'Reset App',
-      'This will erase ALL your data. Are you sure?',
-      'Yes, Reset Everything', 'btn-danger',
-      () => this.doReset()
-    );
+    if (!confirm('This will erase ALL your data. Are you sure?')) return;
+    this.doReset();
   }
 
   private doReset(): void {
