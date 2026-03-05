@@ -149,8 +149,8 @@ export class HomeComponent implements OnInit {
     }
 
     navigate(item: MenuItem): void {
-        if (!this.currentPlan) return;
         if (item.route === 'cancel') {
+            if (!this.currentPlan) return;
             if (confirm('This will erase all plans and start over. Are you sure?')) {
                 this.planService.cancel(this.currentPlan.id).subscribe({
                     next: () => {
@@ -161,6 +161,7 @@ export class HomeComponent implements OnInit {
                 });
             }
         } else if (item.route === 'complete') {
+            if (!this.currentPlan) return;
             if (confirm('This will finish the current week. Are you sure?')) {
                 this.planService.complete(this.currentPlan!.id).subscribe({
                     next: () => {
