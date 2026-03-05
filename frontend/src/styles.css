@@ -996,9 +996,16 @@ button:disabled,
   padding: .9rem 1.5rem;
   background: var(--surface);
   border-top: 1px solid var(--border);
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 90;
+}
+
+.main-content {
+  flex: 1;
+  padding-bottom: 64px;
 }
 
 .footer-bar .btn {

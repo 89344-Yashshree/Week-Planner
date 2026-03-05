@@ -8,25 +8,23 @@ import { ConfirmService } from '../services/confirm.service';
     standalone: true,
     imports: [CommonModule],
     template: `
-    @if (svc.config()) {
-      <div class="confirm-overlay" (click)="svc.cancel()">
-        <div class="confirm-box" (click)="$event.stopPropagation()">
-          <h3 class="confirm-title">{{ svc.config()!.title }}</h3>
-          <p class="confirm-message">{{ svc.config()!.message }}</p>
-          <div class="confirm-actions">
-            <button class="btn btn-secondary" (click)="svc.cancel()">
-              {{ svc.config()!.cancelLabel || 'Cancel' }}
-            </button>
-            <button class="btn"
-                    [class.btn-danger]="svc.config()!.danger"
-                    [class.btn-primary]="!svc.config()!.danger"
-                    (click)="svc.confirm()">
-              {{ svc.config()!.confirmLabel || 'Confirm' }}
-            </button>
-          </div>
+    <div class="modal-backdrop" *ngIf="svc.config()" (click)="svc.cancel()">
+      <div class="modal-box" (click)="$event.stopPropagation()" id="confirm-dialog">
+        <h3 id="confirm-title">{{ svc.config()?.title }}</h3>
+        <p id="confirm-body">{{ svc.config()?.message }}</p>
+        <div class="modal-actions">
+          <button id="confirm-cancel-btn" class="btn btn-secondary" (click)="svc.cancel()">
+            {{ svc.config()?.cancelLabel || 'Cancel' }}
+          </button>
+          <button id="confirm-ok-btn" class="btn"
+                  [class.btn-danger]="svc.config()?.danger"
+                  [class.btn-primary]="!svc.config()?.danger"
+                  (click)="svc.confirm()">
+            {{ svc.config()?.confirmLabel || 'Confirm' }}
+          </button>
         </div>
       </div>
-    }
+    </div>
   `,
     styles: [`
     .confirm-overlay {
