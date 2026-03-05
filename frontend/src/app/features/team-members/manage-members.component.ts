@@ -4,15 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TeamMemberService } from '../../core/services/team-member.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { TeamMember } from '../../core/models/team-member.model';
 import { MemberRole } from '../../core/enums/enums';
 
 /** Screen for managing team members (Lead only). */
 @Component({
-    selector: 'app-manage-members',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-manage-members',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="page-container">
       <button class="btn btn-back" (click)="router.navigate(['/home'])">← Home</button>
       <h1>Manage Team Members</h1>
@@ -47,45 +48,52 @@ import { MemberRole } from '../../core/enums/enums';
   `
 })
 export class ManageMembersComponent implements OnInit {
-    members: TeamMember[] = [];
-    newName = '';
-    Role = MemberRole;
+  members: TeamMember[] = [];
+  newName = '';
+  Role = MemberRole;
 
-    constructor(
-        private teamService: TeamMemberService,
-        private toast: ToastService,
-        public router: Router
-    ) { }
+  constructor(
+    private teamService: TeamMemberService,
+    private toast: ToastService,
+    private confirmSvc: ConfirmService,
+    public router: Router
+  ) { }
 
-    ngOnInit(): void {
-        this.loadMembers();
-    }
+  ngOnInit(): void {
+    this.loadMembers();
+  }
 
-    loadMembers(): void {
-        this.teamService.getAll().subscribe(members => this.members = members);
-    }
+  loadMembers(): void {
+    this.teamService.getAll().subscribe(members => this.members = members);
+  }
 
-    addMember(): void {
-        const name = this.newName.trim();
-        if (!name) return;
-        this.teamService.add(name).subscribe({
-            next: m => { this.members.push(m); this.newName = ''; },
-            error: e => this.toast.show(e.error?.error || 'Failed to add member.', 'error')
-        });
-    }
+  addMember(): void {
+    const name = this.newName.trim();
+    if (!name) return;
+    this.teamService.add(name).subscribe({
+      next: m => { this.members.push(m); this.newName = ''; },
+      error: e => this.toast.show(e.error?.error || 'Failed to add member.', 'error')
+    });
+  }
 
-    makeLead(member: TeamMember): void {
-        this.teamService.makeLead(member.id).subscribe({
-            next: () => { this.members.forEach(m => m.role = m.id === member.id ? MemberRole.Lead : MemberRole.Member); },
-            error: e => this.toast.show(e.error?.error || 'Failed.', 'error')
-        });
-    }
+  makeLead(member: TeamMember): void {
+    this.teamService.makeLead(member.id).subscribe({
+      next: () => { this.members.forEach(m => m.role = m.id === member.id ? MemberRole.Lead : MemberRole.Member); },
+      error: e => this.toast.show(e.error?.error || 'Failed.', 'error')
+    });
+  }
 
-    remove(member: TeamMember): void {
-        if (!confirm(`Remove ${member.name}?`)) return;
-        this.teamService.remove(member.id).subscribe({
-            next: () => { this.members = this.members.filter(m => m.id !== member.id); },
-            error: e => this.toast.show(e.error?.error || 'Failed to remove member.', 'error')
-        });
-    }
+  async remove(member: TeamMember): Promise<void> {
+    const ok = await this.confirmSvc.open({
+      title: 'Remove Team Member',
+      message: `Remove ${member.name} from the team? This cannot be undone.`,
+      confirmLabel: 'Yes, Remove',
+      danger: true
+    });
+    if (!ok) return;
+    this.teamService.remove(member.id).subscribe({
+      next: () => { this.members = this.members.filter(m => m.id !== member.id); },
+      error: e => this.toast.show(e.error?.error || 'Failed to remove member.', 'error')
+    });
+  }
 }

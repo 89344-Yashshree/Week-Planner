@@ -6,6 +6,7 @@ import { ToastService, Toast } from './core/services/toast.service';
 import { DataService } from './core/services/data.service';
 import { TeamMember } from './core/models/team-member.model';
 import { MemberRole } from './core/enums/enums';
+import { ConfirmDialogComponent } from './core/components/confirm-dialog.component';
 
 /** Confirm modal state — controls the PRD §5.14 custom confirmation dialogs. */
 interface ConfirmState {
@@ -20,11 +21,12 @@ interface ConfirmState {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, ConfirmDialogComponent],
   template: `
     <div class="app-wrapper">
 
-      <!-- ── Navbar (PRD §5.3) ──────────────────────────────── -->
+      <!-- ── Global Confirm Dialog ─────────────────────────── -->
+      <app-confirm-dialog/>
       <nav class="navbar" *ngIf="user">
         <span class="navbar-brand">📅 Week Planner</span>
         <div class="navbar-links">

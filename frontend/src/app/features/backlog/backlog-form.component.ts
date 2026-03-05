@@ -4,15 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { BacklogService } from '../../core/services/backlog.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { BacklogItem } from '../../core/models/backlog-item.model';
 import { BacklogCategory } from '../../core/enums/enums';
 
 /** Add / Edit Backlog Item form. */
 @Component({
-    selector: 'app-backlog-form',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-backlog-form',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="page-container">
       <button class="btn btn-back" (click)="router.navigate(['/backlog'])">← Go Back</button>
       <h1>{{ isEdit ? 'Edit Backlog Item' : 'Add a New Backlog Item' }}</h1>
@@ -51,55 +52,62 @@ import { BacklogCategory } from '../../core/enums/enums';
   `
 })
 export class BacklogFormComponent implements OnInit {
-    isEdit = false;
-    itemId?: string;
-    Cat = BacklogCategory;
-    form = {
-        title: '',
-        description: '',
-        category: BacklogCategory.ClientFocused,
-        estimatedHours: 1
-    };
+  isEdit = false;
+  itemId?: string;
+  Cat = BacklogCategory;
+  form = {
+    title: '',
+    description: '',
+    category: BacklogCategory.ClientFocused,
+    estimatedHours: 1
+  };
 
-    constructor(
-        private backlogService: BacklogService,
-        private toast: ToastService,
-        private route: ActivatedRoute,
-        public router: Router
-    ) { }
+  constructor(
+    private backlogService: BacklogService,
+    private toast: ToastService,
+    private confirmSvc: ConfirmService,
+    private route: ActivatedRoute,
+    public router: Router
+  ) { }
 
-    ngOnInit(): void {
-        this.itemId = this.route.snapshot.paramMap.get('id') ?? undefined;
-        this.isEdit = !!this.itemId;
-        if (this.isEdit) {
-            this.backlogService.getById(this.itemId!).subscribe(item => {
-                this.form = {
-                    title: item.title,
-                    description: item.description ?? '',
-                    category: item.category,
-                    estimatedHours: item.estimatedHours
-                };
-            });
-        }
+  ngOnInit(): void {
+    this.itemId = this.route.snapshot.paramMap.get('id') ?? undefined;
+    this.isEdit = !!this.itemId;
+    if (this.isEdit) {
+      this.backlogService.getById(this.itemId!).subscribe(item => {
+        this.form = {
+          title: item.title,
+          description: item.description ?? '',
+          category: item.category,
+          estimatedHours: item.estimatedHours
+        };
+      });
     }
+  }
 
-    save(): void {
-        const payload = { title: this.form.title, description: this.form.description, category: this.form.category, estimatedHours: this.form.estimatedHours };
-        const req = this.isEdit
-            ? this.backlogService.update(this.itemId!, payload)
-            : this.backlogService.create(payload);
+  save(): void {
+    const payload = { title: this.form.title, description: this.form.description, category: this.form.category, estimatedHours: this.form.estimatedHours };
+    const req = this.isEdit
+      ? this.backlogService.update(this.itemId!, payload)
+      : this.backlogService.create(payload);
 
-        req.subscribe({
-            next: () => { this.toast.show('Backlog item saved!'); this.router.navigate(['/backlog']); },
-            error: e => this.toast.show(e.error?.error || 'Failed to save.', 'error')
-        });
-    }
+    req.subscribe({
+      next: () => { this.toast.show('Backlog item saved!'); this.router.navigate(['/backlog']); },
+      error: e => this.toast.show(e.error?.error || 'Failed to save.', 'error')
+    });
+  }
 
-    deleteItem(): void {
-        if (!confirm('Delete this backlog item permanently?')) return;
-        this.backlogService.delete(this.itemId!).subscribe({
-            next: () => { this.router.navigate(['/backlog']); },
-            error: e => this.toast.show(e.error?.error || 'Failed to delete.', 'error')
-        });
-    }
+  async deleteItem(): Promise<void> {
+    const ok = await this.confirmSvc.open({
+      title: 'Delete Backlog Item',
+      message: 'This will permanently delete the item and cannot be undone.',
+      confirmLabel: 'Yes, Delete',
+      danger: true
+    });
+    if (!ok) return;
+    this.backlogService.delete(this.itemId!).subscribe({
+      next: () => { this.router.navigate(['/backlog']); },
+      error: e => this.toast.show(e.error?.error || 'Failed to delete.', 'error')
+    });
+  }
 }

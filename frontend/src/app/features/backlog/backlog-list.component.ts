@@ -5,15 +5,16 @@ import { Router } from '@angular/router';
 import { BacklogService } from '../../core/services/backlog.service';
 import { WeeklyPlanService } from '../../core/services/weekly-plan.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { BacklogItem } from '../../core/models/backlog-item.model';
 import { BacklogCategory } from '../../core/enums/enums';
 
 /** Backlog list screen with category/search/archive filters. */
 @Component({
-    selector: 'app-backlog-list',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-backlog-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="page-container">
       <button class="btn btn-back" (click)="router.navigate(['/home'])">← Home</button>
       <div class="page-header">
@@ -59,43 +60,50 @@ import { BacklogCategory } from '../../core/enums/enums';
   `
 })
 export class BacklogListComponent implements OnInit {
-    items: BacklogItem[] = [];
-    activeCategory?: BacklogCategory;
-    includeArchived = false;
-    search = '';
-    Cat = BacklogCategory;
+  items: BacklogItem[] = [];
+  activeCategory?: BacklogCategory;
+  includeArchived = false;
+  search = '';
+  Cat = BacklogCategory;
 
-    constructor(
-        private backlogService: BacklogService,
-        private toast: ToastService,
-        public router: Router
-    ) { }
+  constructor(
+    private backlogService: BacklogService,
+    private toast: ToastService,
+    private confirmSvc: ConfirmService,
+    public router: Router
+  ) { }
 
-    ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); }
 
-    load(): void {
-        this.backlogService.getAll(this.includeArchived, this.activeCategory, this.search)
-            .subscribe(items => this.items = items);
-    }
+  load(): void {
+    this.backlogService.getAll(this.includeArchived, this.activeCategory, this.search)
+      .subscribe(items => this.items = items);
+  }
 
-    toggleCategory(cat: BacklogCategory): void {
-        this.activeCategory = this.activeCategory === cat ? undefined : cat;
-        this.load();
-    }
+  toggleCategory(cat: BacklogCategory): void {
+    this.activeCategory = this.activeCategory === cat ? undefined : cat;
+    this.load();
+  }
 
-    archive(item: BacklogItem): void {
-        if (!confirm(`Archive "${item.title}"?`)) return;
-        this.backlogService.archive(item.id).subscribe({
-            next: () => { this.items = this.items.filter(i => i.id !== item.id); this.toast.show('Backlog item archived.'); },
-            error: e => this.toast.show(e.error?.error || 'Failed.', 'error')
-        });
-    }
+  async archive(item: BacklogItem): Promise<void> {
+    const ok = await this.confirmSvc.open({
+      title: 'Archive Backlog Item',
+      message: `Archive "${item.title}"? It won't be shown in the backlog but can be viewed in history.`,
+      confirmLabel: 'Yes, Archive',
+      danger: true
+    });
+    if (!ok) return;
+    this.backlogService.archive(item.id).subscribe({
+      next: () => { this.items = this.items.filter(i => i.id !== item.id); this.toast.show('Backlog item archived.'); },
+      error: e => this.toast.show(e.error?.error || 'Failed.', 'error')
+    });
+  }
 
-    categoryLabel(cat: BacklogCategory): string {
-        return { ClientFocused: 'Client Focused', TechDebt: 'Tech Debt', RAndD: 'R&D' }[cat] || cat;
-    }
+  categoryLabel(cat: BacklogCategory): string {
+    return { ClientFocused: 'Client Focused', TechDebt: 'Tech Debt', RAndD: 'R&D' }[cat] || cat;
+  }
 
-    categoryClass(cat: BacklogCategory): string {
-        return { ClientFocused: 'badge-blue', TechDebt: 'badge-red', RAndD: 'badge-green' }[cat] || '';
-    }
+  categoryClass(cat: BacklogCategory): string {
+    return { ClientFocused: 'badge-blue', TechDebt: 'badge-red', RAndD: 'badge-green' }[cat] || '';
+  }
 }

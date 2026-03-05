@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { WeeklyPlanService } from '../../core/services/weekly-plan.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { TeamMember } from '../../core/models/team-member.model';
 import { WeeklyPlan } from '../../core/models/weekly-plan.model';
 import { MemberRole, WeekState } from '../../core/enums/enums';
@@ -61,6 +62,7 @@ export class HomeComponent implements OnInit {
         private auth: AuthService,
         private planService: WeeklyPlanService,
         private toast: ToastService,
+        private confirmSvc: ConfirmService,
         private router: Router
     ) { }
 
@@ -148,29 +150,33 @@ export class HomeComponent implements OnInit {
         }
     }
 
-    navigate(item: MenuItem): void {
+    async navigate(item: MenuItem): Promise<void> {
         if (item.route === 'cancel') {
             if (!this.currentPlan) return;
-            if (confirm('This will erase all plans and start over. Are you sure?')) {
-                this.planService.cancel(this.currentPlan.id).subscribe({
-                    next: () => {
-                        this.toast.show("This week's planning has been cancelled.", 'warning');
-                        this.ngOnInit();
-                    },
-                    error: e => this.toast.show(e.error?.error || 'Failed to cancel.', 'error')
-                });
-            }
+            const ok = await this.confirmSvc.open({
+                title: 'Cancel This Week\'s Planning',
+                message: 'This will erase all plans and start over. Are you sure?',
+                confirmLabel: 'Yes, Cancel Planning',
+                danger: true
+            });
+            if (!ok) return;
+            this.planService.cancel(this.currentPlan.id).subscribe({
+                next: () => { this.toast.show("This week's planning has been cancelled.", 'warning'); this.ngOnInit(); },
+                error: e => this.toast.show(e.error?.error || 'Failed to cancel.', 'error')
+            });
         } else if (item.route === 'complete') {
             if (!this.currentPlan) return;
-            if (confirm('This will finish the current week. Are you sure?')) {
-                this.planService.complete(this.currentPlan!.id).subscribe({
-                    next: () => {
-                        this.toast.show('This week is complete! It\'s been moved to Past Weeks.', 'success');
-                        this.ngOnInit();
-                    },
-                    error: e => this.toast.show(e.error?.error || 'Failed to complete week.', 'error')
-                });
-            }
+            const ok = await this.confirmSvc.open({
+                title: 'Finish This Week',
+                message: 'This will close this planning cycle and move it to Past Weeks. Are you sure?',
+                confirmLabel: 'Yes, Finish Week',
+                danger: false
+            });
+            if (!ok) return;
+            this.planService.complete(this.currentPlan!.id).subscribe({
+                next: () => { this.toast.show('This week is complete! It\'s been moved to Past Weeks.', 'success'); this.ngOnInit(); },
+                error: e => this.toast.show(e.error?.error || 'Failed to complete week.', 'error')
+            });
         } else {
             this.router.navigate([item.route]);
         }
