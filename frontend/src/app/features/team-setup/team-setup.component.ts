@@ -1,5 +1,5 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, OnInit, Inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TeamMemberService } from '../../core/services/team-member.service';
@@ -15,7 +15,11 @@ import { MemberRole } from '../../core/enums/enums';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="page-container">
-      <div class="card setup-card">
+      <div class="card setup-card" style="position:relative">
+        <button class="btn btn-sm btn-outline" (click)="toggleTheme()" id="setup-theme-toggle"
+                style="position:absolute;top:1rem;right:1rem">
+          {{ isDark ? 'Light Mode' : 'Dark Mode' }}
+        </button>
         <h1>Welcome! Set up your team to start planning.</h1>
         <p class="subtitle">Add the people on your team. Pick one person as the Team Lead.</p>
 
@@ -59,8 +63,11 @@ export class TeamSetupComponent implements OnInit {
   constructor(
     private teamService: TeamMemberService,
     private toast: ToastService,
-    private router: Router
+    private router: Router,
+    @Inject(DOCUMENT) private document: Document
   ) { }
+
+  isDark = true;
 
   ngOnInit(): void {
     this.teamService.getAll().subscribe(members => {
@@ -95,5 +102,16 @@ export class TeamSetupComponent implements OnInit {
 
   done(): void {
     this.router.navigate(['/login']);
+  }
+
+  toggleTheme(): void {
+    this.isDark = !this.isDark;
+    if (this.isDark) {
+      this.document.body.classList.remove('light-mode');
+      this.document.body.classList.add('dark-mode');
+    } else {
+      this.document.body.classList.remove('dark-mode');
+      this.document.body.classList.add('light-mode');
+    }
   }
 }
