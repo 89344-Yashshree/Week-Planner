@@ -52,11 +52,9 @@ var app = builder.Build();
 // Global exception handler — must be first
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Weekly Plan Tracker v1"));
-}
+// Swagger available in all environments for verification
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Weekly Plan Tracker v1"));
 
 // CORS must come before HTTPS redirect so headers are present on redirect responses
 app.UseCors();
