@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TeamMemberService } from '../../core/services/team-member.service';
@@ -8,7 +8,8 @@ import { MemberRole } from '../../core/enums/enums';
 
 /** Login screen — "Who are you?" user selection. */
 @Component({
-    selector: 'app-login',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-login',
     standalone: true,
     imports: [CommonModule],
     template: `

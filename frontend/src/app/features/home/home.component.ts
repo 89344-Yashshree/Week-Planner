@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -20,7 +20,8 @@ interface MenuItem {
 
 /** Home dashboard — shows context-aware menu based on week state and user role. */
 @Component({
-    selector: 'app-home',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-home',
     standalone: true,
     imports: [CommonModule],
     template: `

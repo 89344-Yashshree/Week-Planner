@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { WeeklyPlanService } from '../../core/services/weekly-plan.service';
@@ -12,7 +12,8 @@ interface MemberReview { member: TeamMember; hoursPlanned: number; assignments: 
 
 /** Review and Freeze screen (Lead only). */
 @Component({
-    selector: 'app-review-freeze',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-review-freeze',
     standalone: true,
     imports: [CommonModule],
     template: `

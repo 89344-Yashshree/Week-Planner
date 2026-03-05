@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,7 +12,8 @@ import { AssignmentStatus } from '../../core/enums/enums';
 
 /** Update My Progress screen — shown only in Frozen state. */
 @Component({
-    selector: 'app-update-progress',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-update-progress',
     standalone: true,
     imports: [CommonModule, FormsModule],
     template: `

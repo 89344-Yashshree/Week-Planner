@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { MemberRole } from '../../core/enums/enums';
 
 /** Screen for managing team members (Lead only). */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-manage-members',
   standalone: true,
   imports: [CommonModule, FormsModule],

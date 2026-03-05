@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,7 +14,8 @@ import { BacklogCategory } from '../../core/enums/enums';
 
 /** Plan My Work screen — pick backlog items and commit hours. */
 @Component({
-    selector: 'app-plan-work',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-plan-work',
     standalone: true,
     imports: [CommonModule, FormsModule],
     template: `

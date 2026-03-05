@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -10,6 +10,7 @@ import { BacklogCategory } from '../../core/enums/enums';
 
 /** Add / Edit Backlog Item form. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-backlog-form',
   standalone: true,
   imports: [CommonModule, FormsModule],

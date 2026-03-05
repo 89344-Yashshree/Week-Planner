@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,6 +9,7 @@ import { MemberRole } from '../../core/enums/enums';
 
 /** First-time team setup screen. Shown when no team members exist in the system. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-team-setup',
   standalone: true,
   imports: [CommonModule, FormsModule],

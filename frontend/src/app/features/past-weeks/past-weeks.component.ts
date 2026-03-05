@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { WeeklyPlanService } from '../../core/services/weekly-plan.service';
@@ -8,6 +8,7 @@ import { WeeklyPlan } from '../../core/models/weekly-plan.model';
 
 /** Past Weeks screen — PRD §5.13. Shows expandable completed week cards + data import section. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-past-weeks',
   standalone: true,
   imports: [CommonModule],

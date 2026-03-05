@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ProgressService, TeamProgressDto } from '../../core/services/progress.service';
@@ -11,6 +11,7 @@ import { WeeklyPlanService } from '../../core/services/weekly-plan.service';
  * and the full ProgressUpdate history timeline.
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-team-progress',
   standalone: true,
   imports: [CommonModule],

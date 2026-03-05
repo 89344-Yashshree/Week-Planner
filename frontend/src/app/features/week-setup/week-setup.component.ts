@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,7 +10,8 @@ import { WeeklyPlan } from '../../core/models/weekly-plan.model';
 
 /** Screen for configuring the week setup (Lead only). */
 @Component({
-    selector: 'app-week-setup',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-week-setup',
     standalone: true,
     imports: [CommonModule, FormsModule],
     template: `

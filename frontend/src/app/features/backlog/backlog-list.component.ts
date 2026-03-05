@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,6 +11,7 @@ import { BacklogCategory } from '../../core/enums/enums';
 
 /** Backlog list screen with category/search/archive filters. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-backlog-list',
   standalone: true,
   imports: [CommonModule, FormsModule],
