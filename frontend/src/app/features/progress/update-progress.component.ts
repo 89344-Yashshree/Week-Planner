@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,9 +14,9 @@ import { AssignmentStatus } from '../../core/enums/enums';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-update-progress',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="page-container">
       <button class="btn btn-back" (click)="router.navigate(['/home'])">← Home</button>
       <h1>Update My Progress</h1>
@@ -60,44 +60,53 @@ import { AssignmentStatus } from '../../core/enums/enums';
   `
 })
 export class UpdateProgressComponent implements OnInit {
-    assignments: PlanAssignment[] = [];
-    progressMap: Record<string, { hours: number; status: AssignmentStatus }> = {};
-    plan?: WeeklyPlan;
-    Status = AssignmentStatus;
+  assignments: PlanAssignment[] = [];
+  progressMap: Record<string, { hours: number; status: AssignmentStatus }> = {};
+  plan?: WeeklyPlan;
+  Status = AssignmentStatus;
 
-    constructor(
-        private progressService: ProgressService,
-        private planService: WeeklyPlanService,
-        private auth: AuthService,
-        private toast: ToastService,
-        public router: Router
-    ) { }
+  constructor(
+    private progressService: ProgressService,
+    private planService: WeeklyPlanService,
+    private auth: AuthService,
+    private toast: ToastService,
+    public router: Router,
+    private cdr: ChangeDetectorRef
+  ) { }
 
-    get totalCommitted(): number { return this.assignments.reduce((s, a) => s + a.committedHours, 0); }
-    get totalDone(): number { return Object.values(this.progressMap).reduce((s, p) => s + p.hours, 0); }
+  get totalCommitted(): number { return this.assignments.reduce((s, a) => s + a.committedHours, 0); }
+  get totalDone(): number { return Object.values(this.progressMap).reduce((s, p) => s + p.hours, 0); }
 
-    ngOnInit(): void {
-        this.planService.getCurrent().subscribe(plan => {
-            if (!plan || !this.auth.currentUser) return;
-            this.plan = plan;
-            this.progressService.getMemberProgress(this.auth.currentUser.id, plan.id).subscribe((result: any) => {
-                this.assignments = result.assignments || [];
-                this.assignments.forEach(a => {
-                    this.progressMap[a.id] = { hours: a.hoursCompleted, status: a.status };
-                });
-            });
+  ngOnInit(): void {
+    this.planService.getCurrent().subscribe(plan => {
+      if (!plan || !this.auth.currentUser) return;
+      this.plan = plan;
+      this.progressService.getMemberProgress(this.auth.currentUser.id, plan.id).subscribe((result: any) => {
+        this.assignments = result.assignments || [];
+        this.assignments.forEach(a => {
+          this.progressMap[a.id] = { hours: a.hoursCompleted, status: a.status };
         });
-    }
+        this.cdr.markForCheck();
+      });
+    });
+  }
 
-    updateProgress(a: PlanAssignment): void {
-        if (!this.auth.currentUser) return;
-        const p = this.progressMap[a.id];
-        this.progressService.updateProgress(a.id, this.auth.currentUser.id, p.hours, p.status).subscribe({
-            next: () => this.toast.show('Progress updated!'),
-            error: e => this.toast.show(e.error?.error || 'Failed to update.', 'error')
-        });
-    }
+  updateProgress(a: PlanAssignment): void {
+    if (!this.auth.currentUser) return;
+    const p = this.progressMap[a.id];
+    this.progressService.updateProgress(a.id, this.auth.currentUser.id, p.hours, p.status).subscribe({
+      next: () => {
+        this.toast.show(`Progress updated for "${a.backlogItemTitle}"!`);
+        this.cdr.markForCheck();
+      },
+      error: (e) => {
+        const msg = e.error?.error || e.message || 'Failed to update progress.';
+        this.toast.show(msg, 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
-    catLabel(cat: string): string { return { ClientFocused: 'Client Focused', TechDebt: 'Tech Debt', RAndD: 'R&D' }[cat] || cat; }
-    catClass(cat: string): string { return { ClientFocused: 'badge-blue', TechDebt: 'badge-red', RAndD: 'badge-green' }[cat] || ''; }
+  catLabel(cat: string): string { return { ClientFocused: 'Client Focused', TechDebt: 'Tech Debt', RAndD: 'R&D' }[cat] || cat; }
+  catClass(cat: string): string { return { ClientFocused: 'badge-blue', TechDebt: 'badge-red', RAndD: 'badge-green' }[cat] || ''; }
 }
