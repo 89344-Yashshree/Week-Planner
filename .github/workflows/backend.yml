@@ -86,9 +86,6 @@ jobs:
           --configuration Release
           --output ./publish
 
-      - name: Zip publish output
-        run: zip -r publish.zip publish/
-
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -96,8 +93,10 @@ jobs:
 
       - name: Deploy to Azure Web App
         run: |
+          cd publish && zip -r ../app.zip .
           az webapp deploy \
             --name ${{ env.AZURE_WEBAPP_NAME }} \
             --resource-group WeekPlanner-RG \
-            --src-path publish.zip \
-            --type zip
+            --src-path ../app.zip \
+            --type zip \
+            --async true
