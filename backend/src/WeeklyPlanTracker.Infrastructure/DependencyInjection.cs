@@ -18,11 +18,19 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Register EF Core with SQL Server
+        // Register EF Core with SQL Server (with resiliency for Azure)
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
-                sql => sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+                sql =>
+                {
+                    sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
+                    sql.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorNumbersToAdd: null);
+                    sql.CommandTimeout(30);
+                }));
 
         // Register repositories
         services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();

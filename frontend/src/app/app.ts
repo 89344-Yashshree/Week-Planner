@@ -1,6 +1,7 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { ToastService, Toast } from './core/services/toast.service';
@@ -12,6 +13,7 @@ import { BacklogService } from './core/services/backlog.service';
 import { WeeklyPlanService } from './core/services/weekly-plan.service';
 import { TeamMember } from './core/models/team-member.model';
 import { MemberRole } from './core/enums/enums';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -34,6 +36,7 @@ export class App implements OnInit {
     private teamService: TeamMemberService,
     private backlogService: BacklogService,
     private planService: WeeklyPlanService,
+    private http: HttpClient,
     public router: Router,
     @Inject(DOCUMENT) private document: Document
   ) { }
@@ -47,6 +50,10 @@ export class App implements OnInit {
     });
     this.toastService.toasts$.subscribe(t => this.toasts = t);
     this.document.body.classList.add('dark-mode');
+
+    // Warm-up ping to wake the backend from cold start
+    this.http.get(`${environment.apiUrl.replace('/api', '')}/health`, { responseType: 'text' })
+      .subscribe({ error: () => { } });
   }
 
   toggleTheme(): void {

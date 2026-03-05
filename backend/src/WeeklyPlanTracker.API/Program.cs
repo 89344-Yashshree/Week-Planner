@@ -18,6 +18,13 @@ builder.Services.AddScoped<PlanningService>();
 builder.Services.AddScoped<ProgressService>();
 builder.Services.AddScoped<DataService>();
 
+// Health checks for monitoring
+builder.Services.AddHealthChecks()
+    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!);
+
+// Response caching
+builder.Services.AddResponseCaching();
+
 // Controllers + JSON options (serialize enums as strings)
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
@@ -58,6 +65,7 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Weekly Plan
 
 // CORS must come before HTTPS redirect so headers are present on redirect responses
 app.UseCors();
+app.UseResponseCaching();
 
 // Only apply HTTPS redirect for real deployments (not when using in-memory DB in integration tests)
 using (var detectScope = app.Services.CreateScope())
@@ -67,6 +75,7 @@ using (var detectScope = app.Services.CreateScope())
         app.UseHttpsRedirection();
 }
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 // ── Auto-migrate database on startup (with timeout to prevent hanging on Azure) ───
 try
