@@ -1,19 +1,13 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { ToastService, Toast } from './core/services/toast.service';
 import { DataService } from './core/services/data.service';
 import { ConfirmService } from './core/services/confirm.service';
 import { ConfirmDialogComponent } from './core/components/confirm-dialog.component';
-import { TeamMemberService } from './core/services/team-member.service';
-import { BacklogService } from './core/services/backlog.service';
-import { WeeklyPlanService } from './core/services/weekly-plan.service';
 import { TeamMember } from './core/models/team-member.model';
 import { MemberRole } from './core/enums/enums';
-import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -37,10 +31,6 @@ export class App implements OnInit {
     public toastService: ToastService,
     public dataService: DataService,
     private confirmSvc: ConfirmService,
-    private teamService: TeamMemberService,
-    private backlogService: BacklogService,
-    private planService: WeeklyPlanService,
-    private http: HttpClient,
     public router: Router,
     @Inject(DOCUMENT) private document: Document
   ) { }
@@ -54,10 +44,6 @@ export class App implements OnInit {
     });
     this.toastService.toasts$.subscribe(t => this.toasts = t);
     this.document.body.classList.add('dark-mode');
-
-    // Warm-up ping to wake the backend from cold start
-    this.http.get(`${environment.apiUrl.replace('/api', '')}/health`, { responseType: 'text' })
-      .subscribe({ error: () => { } });
   }
 
   toggleTheme(): void {
@@ -88,6 +74,7 @@ export class App implements OnInit {
     this.dataService.seed().subscribe({
       next: () => {
         this.toastService.show('Sample data loaded! Pick a person to get started.', 'success');
+        this.auth.logout();
         this.router.navigate(['/login']);
       },
       error: () => this.toastService.show('Failed to load sample data.', 'error')
@@ -113,17 +100,10 @@ export class App implements OnInit {
     });
   }
 
-  // Footer: Download — client-side export from individual endpoints
+  // Footer: Download — export all localStorage data as JSON file
   downloadData(): void {
-    forkJoin({
-      teamMembers: this.teamService.getAll(),
-      backlogItems: this.backlogService.getAll(true),
-      currentPlan: this.planService.getCurrent(),
-      pastPlans: this.planService.getPast()
-    }).subscribe({
-      next: (data) => {
-        const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
+    this.dataService.export().subscribe({
+      next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = this.document.createElement('a');
         a.href = url;
@@ -136,38 +116,22 @@ export class App implements OnInit {
     });
   }
 
-  // Footer: Load from File — client-side JSON read + validation
+  // Footer: Load from File — import JSON backup
   onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result as string);
-        // Validate backup structure
-        if (!data.teamMembers && !data.backlogItems) {
-          this.toastService.show('Invalid backup file. Expected Week Planner data format.', 'error');
-          return;
-        }
-        // Try server-side import first
-        this.dataService.import(file).subscribe({
-          next: () => {
-            this.toastService.show('Data restored from file!', 'success');
-            this.router.navigate(['/login']);
-          },
-          error: () => {
-            // Server import failed — show what was found in the file
-            const members = data.teamMembers?.length || 0;
-            const items = data.backlogItems?.length || 0;
-            this.toastService.show(`File read OK (${members} members, ${items} backlog items) but server import is unavailable. Please seed data instead.`, 'warning');
-          }
-        });
-      } catch {
-        this.toastService.show('Could not read the file. Make sure it is valid JSON.', 'error');
+    this.dataService.import(file).subscribe({
+      next: () => {
+        this.toastService.show('Data restored from file!', 'success');
+        this.auth.logout();
+        this.router.navigate(['/login']);
+      },
+      error: (e) => {
+        const msg = e?.error?.error || 'Could not restore from file. Make sure it is valid JSON.';
+        this.toastService.show(msg, 'error');
       }
-    };
-    reader.readAsText(file);
+    });
     (event.target as HTMLInputElement).value = '';
   }
 }

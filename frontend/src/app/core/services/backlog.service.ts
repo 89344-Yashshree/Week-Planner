@@ -1,41 +1,123 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { BacklogItem } from '../models/backlog-item.model';
 import { BacklogCategory } from '../enums/enums';
-import { environment } from '../../../environments/environment';
 
-/** HTTP service for all backlog-item API calls. */
+/** localStorage service for all backlog-item operations. */
 @Injectable({ providedIn: 'root' })
 export class BacklogService {
-    private base = `${environment.apiUrl}/backlog-items`;
+    private readonly STORAGE_KEY = 'wpt_backlog_items';
+    private readonly ASSIGNMENTS_KEY = 'wpt_assignments';
+    private readonly PLAN_KEY = 'wpt_current_plan';
 
-    constructor(private http: HttpClient) { }
+    private readAll(): BacklogItem[] {
+        const raw = localStorage.getItem(this.STORAGE_KEY);
+        return raw ? JSON.parse(raw) as BacklogItem[] : [];
+    }
+
+    private writeAll(items: BacklogItem[]): void {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
+    }
+
+    private uuid(): string {
+        return crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+    }
+
+    /** Get the set of backlog item IDs that are assigned in the current active plan. */
+    private getInPlanIds(): Set<string> {
+        const plan = localStorage.getItem(this.PLAN_KEY);
+        if (!plan) return new Set();
+        const currentPlan = JSON.parse(plan);
+        const raw = localStorage.getItem(this.ASSIGNMENTS_KEY);
+        const assignments: any[] = raw ? JSON.parse(raw) : [];
+        const weekAssignments = assignments.filter(a => a.weeklyPlanId === currentPlan.id);
+        return new Set(weekAssignments.map(a => a.backlogItemId));
+    }
 
     getAll(includeArchived = false, category?: BacklogCategory, search?: string): Observable<BacklogItem[]> {
-        let params = new HttpParams().set('includeArchived', includeArchived.toString());
-        if (category) params = params.set('category', category);
-        if (search) params = params.set('search', search);
-        return this.http.get<BacklogItem[]>(this.base, { params });
+        let items = this.readAll();
+        const inPlanIds = this.getInPlanIds();
+
+        // Apply filters
+        if (!includeArchived) {
+            items = items.filter(i => !i.isArchived);
+        }
+        if (category) {
+            items = items.filter(i => i.category === category);
+        }
+        if (search && search.trim()) {
+            const s = search.trim().toLowerCase();
+            items = items.filter(i => i.title.toLowerCase().includes(s));
+        }
+
+        // Set isInActivePlan flag
+        items = items.map(i => ({ ...i, isInActivePlan: inPlanIds.has(i.id) }));
+
+        return of(items);
     }
 
     getById(id: string): Observable<BacklogItem> {
-        return this.http.get<BacklogItem>(`${this.base}/${id}`);
+        const items = this.readAll();
+        const item = items.find(i => i.id === id);
+        if (!item) return throwError(() => ({ error: { error: 'Item not found.' } }));
+        const inPlanIds = this.getInPlanIds();
+        return of({ ...item, isInActivePlan: inPlanIds.has(item.id) });
     }
 
     create(item: { title: string; description?: string; category: BacklogCategory; estimatedHours: number }): Observable<BacklogItem> {
-        return this.http.post<BacklogItem>(this.base, item);
+        if (!item.title || !item.title.trim()) {
+            return throwError(() => ({ error: { error: 'Title cannot be empty.' } }));
+        }
+        if (!item.estimatedHours || item.estimatedHours <= 0) {
+            return throwError(() => ({ error: { error: 'Estimated hours must be > 0.' } }));
+        }
+        const items = this.readAll();
+        const newItem: BacklogItem = {
+            id: this.uuid(),
+            title: item.title.trim(),
+            description: item.description || '',
+            category: item.category,
+            estimatedHours: item.estimatedHours,
+            isArchived: false,
+            isInActivePlan: false,
+            createdAt: new Date().toISOString()
+        };
+        items.push(newItem);
+        this.writeAll(items);
+        return of(newItem);
     }
 
     update(id: string, item: { title: string; description?: string; category: BacklogCategory; estimatedHours: number }): Observable<BacklogItem> {
-        return this.http.put<BacklogItem>(`${this.base}/${id}`, item);
+        const items = this.readAll();
+        const idx = items.findIndex(i => i.id === id);
+        if (idx === -1) return throwError(() => ({ error: { error: 'Item not found.' } }));
+        items[idx] = {
+            ...items[idx],
+            title: item.title,
+            description: item.description || '',
+            category: item.category,
+            estimatedHours: item.estimatedHours
+        };
+        this.writeAll(items);
+        return of(items[idx]);
     }
 
     archive(id: string): Observable<void> {
-        return this.http.put<void>(`${this.base}/${id}/archive`, {});
+        const items = this.readAll();
+        const idx = items.findIndex(i => i.id === id);
+        if (idx === -1) return throwError(() => ({ error: { error: 'Item not found.' } }));
+        items[idx] = { ...items[idx], isArchived: true };
+        this.writeAll(items);
+        return of(void 0);
     }
 
     delete(id: string): Observable<void> {
-        return this.http.delete<void>(`${this.base}/${id}`);
+        let items = this.readAll();
+        items = items.filter(i => i.id !== id);
+        this.writeAll(items);
+        return of(void 0);
     }
 }

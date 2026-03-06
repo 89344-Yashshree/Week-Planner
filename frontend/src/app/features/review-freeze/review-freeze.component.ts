@@ -71,6 +71,7 @@ interface MemberReview { member: TeamMember; hoursPlanned: number; assignments: 
               <span class="progress-ring-text">{{ mr.hoursPlanned }}</span>
             </div>
             <strong>{{ mr.member.name }}</strong>
+            <span class="badge badge-green" style="margin-left:0.5rem; font-size:0.8rem;" *ngIf="mr.hoursPlanned === 30">✅ Ready</span>
             <span [class.valid-text]="mr.hoursPlanned === 30" [class.error-text]="mr.hoursPlanned !== 30">
               {{ mr.hoursPlanned }} / 30h
             </span>

@@ -1,17 +1,9 @@
 name: Backend CI/CD
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - 'WeeklyPlanTracker.sln'
-      - '.github/workflows/backend.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend.yml'
+  workflow_dispatch:
+    # Backend CI/CD disabled — manually trigger only if needed
+    # Previously triggered on push to backend/** paths
 
 env:
   DOTNET_VERSION: '8.0.x'
