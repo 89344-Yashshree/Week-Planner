@@ -16,12 +16,7 @@
   <!-- Full navbar (logged in, not on setup/login) -->
   <nav class="navbar" *ngIf="user && !isSetupOrLogin">
     <span class="navbar-brand"><img src="favicon.svg" alt="" class="brand-icon" /> Weekly Planner</span>
-    <div class="navbar-links">
-      <a (click)="router.navigate(['/home'])" class="nav-link" id="nav-home">Home</a>
-      <a (click)="router.navigate(['/backlog'])" class="nav-link" id="nav-backlog">Backlog</a>
-      <a *ngIf="isLead" (click)="router.navigate(['/manage-members'])" class="nav-link" id="nav-team">Team</a>
-      <a (click)="router.navigate(['/past-weeks'])" class="nav-link" id="nav-past">Past Weeks</a>
-    </div>
+
     <div class="navbar-right">
       <span class="nav-user">{{ user.name }}</span>
       <span class="badge" [class.badge-lead]="isLead" [class.badge-member]="!isLead">
