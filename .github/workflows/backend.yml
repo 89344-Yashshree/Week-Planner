@@ -84,6 +84,8 @@ jobs:
           dotnet publish
           backend/src/WeeklyPlanTracker.API/WeeklyPlanTracker.API.csproj
           --configuration Release
+          --runtime linux-x64
+          --no-self-contained
           --output ./publish
 
       - name: Create deployment package
