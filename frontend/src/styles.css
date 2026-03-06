@@ -491,10 +491,11 @@ button:disabled,
 }
 
 .member-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 1rem;
-  text-align: left;
+  margin-top: 1.5rem;
 }
 
 /* ── Member card ─────────────────────────────────────────────────────────── */
@@ -503,6 +504,13 @@ button:disabled,
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.login-page .member-card {
+  min-width: 200px;
+  justify-content: center;
+  gap: .75rem;
+  padding: 1.25rem 1.5rem;
 }
 
 .member-info {
