@@ -10,15 +10,19 @@ A full-stack weekly planning application that helps engineering teams manage spr
 | Module | Description |
 |---|---|
 | **Team Setup** | Create your team, assign a Lead |
+| **Login** | Select your identity from the team list, role-based access (Lead vs Member) |
 | **Manage Members** | Add / remove members, reassign Lead role |
 | **Backlog** | CRUD for work items with category tagging, search, filtering, and archiving |
 | **Week Setup** | Start a new week, pick members, set category % splits (Client Focused / Tech Debt / R&D) |
 | **Plan Work** | Assign backlog items to yourself, commit hours (30h per member) |
-| **Review & Freeze** | Validate plan completeness, freeze to lock assignments |
-| **Update Progress** | Log hours done and update status (In Progress / Done / Blocked) |
-| **Team Progress** | Dashboard showing overall %, by-category, and by-member breakdowns |
-| **Past Weeks** | Browse completed historical weeks |
-| **Data Tools** | Seed sample data, export/import backups, reset app |
+| **Review & Freeze** | Validate plan completeness, shows Ready badge per member, freeze to lock assignments |
+| **Update Progress** | Log hours done and update status (In Progress / Done / Blocked) with circular progress ring |
+| **Team Progress** | Dashboard showing overall %, by-category bars, and expandable by-member breakdowns with update history |
+| **Past Weeks** | Browse completed historical weeks with expandable detail cards |
+| **Data Tools** | Seed sample data, export/import JSON backups, reset app |
+| **Dark / Light Theme** | Toggle between dark and light mode, persists across sessions |
+| **Toast Notifications** | Non-blocking success, warning, and error messages in the top-right corner |
+| **Confirmation Dialogs** | Custom styled modals for destructive actions (delete, reset, cancel) |
 
 ---
 
@@ -42,22 +46,24 @@ Setup ──► PlanningOpen ──► Frozen ──► Completed
 | Layer | Technology |
 |---|---|
 | Frontend | Angular 21, TypeScript 5.9, RxJS |
+| Backend | .NET 8, ASP.NET Core, Entity Framework Core, SQL Server |
 | Data | Browser localStorage (offline-first) |
-| Hosting | Azure Static Web Apps |
+| Backend Hosting | Azure App Service |
+| Frontend Hosting | Azure Static Web Apps |
 | CI/CD | GitHub Actions |
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+## Prerequisites
 
 - [Node.js 20+](https://nodejs.org/)
 - [Angular CLI](https://angular.dev/) — `npm install -g @angular/cli`
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) *(for backend only)*
 - SQL Server *(optional — falls back to in-memory DB if not configured)*
 
-### Run Frontend
+## Run Frontend
 
 ```bash
 cd frontend
@@ -67,7 +73,7 @@ ng serve
 
 App opens at `http://localhost:4200`. All data is stored in your browser's localStorage.
 
-### Run Backend
+## Run Backend
 
 ```bash
 cd backend
