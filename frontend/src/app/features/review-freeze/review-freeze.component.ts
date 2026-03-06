@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { WeeklyPlanService } from '../../core/services/weekly-plan.service';
@@ -14,9 +14,9 @@ interface MemberReview { member: TeamMember; hoursPlanned: number; assignments: 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-review-freeze',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
+  standalone: true,
+  imports: [CommonModule],
+  template: `
     <div class="page-container">
       <button class="btn btn-back" (click)="router.navigate(['/home'])">← Home</button>
       <h1>Review the Team's Plan</h1>
@@ -89,72 +89,77 @@ interface MemberReview { member: TeamMember; hoursPlanned: number; assignments: 
   `
 })
 export class ReviewFreezeComponent implements OnInit {
-    plan?: WeeklyPlan;
-    allAssignments: PlanAssignment[] = [];
-    memberReviews: MemberReview[] = [];
-    freezeErrors: string[] = [];
-    Math = Math;
+  plan?: WeeklyPlan;
+  allAssignments: PlanAssignment[] = [];
+  memberReviews: MemberReview[] = [];
+  freezeErrors: string[] = [];
+  Math = Math;
 
-    constructor(
-        private planService: WeeklyPlanService,
-        private assignmentService: PlanAssignmentService,
-        private toast: ToastService,
-        public router: Router
-    ) { }
+  constructor(
+    private planService: WeeklyPlanService,
+    private assignmentService: PlanAssignmentService,
+    private toast: ToastService,
+    public router: Router,
+    private cdr: ChangeDetectorRef
+  ) { }
 
-    ngOnInit(): void {
-        this.planService.getCurrent().subscribe(plan => {
-            if (!plan) { this.router.navigate(['/home']); return; }
-            this.plan = plan;
-            this.loadAssignments();
-        });
-    }
+  ngOnInit(): void {
+    this.planService.getCurrent().subscribe(plan => {
+      if (!plan) { this.router.navigate(['/home']); return; }
+      this.plan = plan;
+      this.loadAssignments();
+      this.cdr.markForCheck();
+    });
+  }
 
-    loadAssignments(): void {
-        if (!this.plan) return;
-        // Load all member assignments
-        const members = this.plan.selectedMembers;
-        let loaded = 0;
-        this.allAssignments = [];
-        this.memberReviews = [];
+  loadAssignments(): void {
+    if (!this.plan) return;
+    // Load all member assignments
+    const members = this.plan.selectedMembers;
+    let loaded = 0;
+    this.allAssignments = [];
+    this.memberReviews = [];
 
-        members.forEach(m => {
-            this.assignmentService.getAssignments(this.plan!.id, m.id).subscribe(assignments => {
-                this.allAssignments.push(...assignments);
-                const hours = assignments.reduce((s, a) => s + a.committedHours, 0);
-                this.memberReviews.push({ member: m, hoursPlanned: hours, assignments, expanded: false });
-                loaded++;
-                if (loaded === members.length) this.loadValidation();
-            });
-        });
-    }
+    members.forEach(m => {
+      this.assignmentService.getAssignments(this.plan!.id, m.id).subscribe(assignments => {
+        this.allAssignments.push(...assignments);
+        const hours = assignments.reduce((s, a) => s + a.committedHours, 0);
+        this.memberReviews.push({ member: m, hoursPlanned: hours, assignments, expanded: false });
+        loaded++;
+        if (loaded === members.length) {
+          this.loadValidation();
+          this.cdr.markForCheck();
+        }
+      });
+    });
+  }
 
-    loadValidation(): void {
-        if (!this.plan) return;
-        this.planService.getFreezeValidation(this.plan.id).subscribe(errors => this.freezeErrors = errors);
-    }
+  loadValidation(): void {
+    if (!this.plan) return;
+    this.planService.getFreezeValidation(this.plan.id).subscribe(errors => { this.freezeErrors = errors; this.cdr.markForCheck(); });
+  }
 
-    categoryPlanned(cat: string): number {
-        return this.allAssignments.filter(a => a.backlogItemCategory === cat).reduce((s, a) => s + a.committedHours, 0);
-    }
+  categoryPlanned(cat: string): number {
+    return this.allAssignments.filter(a => a.backlogItemCategory === cat).reduce((s, a) => s + a.committedHours, 0);
+  }
 
-    isMatch(cat: string, budget: number): boolean {
-        return this.categoryPlanned(cat) === budget;
-    }
+  isMatch(cat: string, budget: number): boolean {
+    return this.categoryPlanned(cat) === budget;
+  }
 
-    freeze(): void {
-        if (!this.plan) return;
-        this.planService.freeze(this.plan.id).subscribe({
-            next: () => { this.toast.show('Plan is frozen! The team can now track progress.'); this.router.navigate(['/home']); },
-            error: e => this.toast.show(e.error?.error || 'Failed to freeze.', 'error')
-        });
-    }
+  freeze(): void {
+    if (!this.plan) return;
+    this.planService.freeze(this.plan.id).subscribe({
+      next: () => { this.toast.show('Plan is frozen! The team can now track progress.'); this.router.navigate(['/home']); },
+      error: e => this.toast.show(e.error?.error || 'Failed to freeze.', 'error')
+    });
+  }
 
-    catLabel(cat: string): string {
-        return { ClientFocused: 'Client', TechDebt: 'Tech Debt', RAndD: 'R&D' }[cat] || cat;
-    }
+  catLabel(cat: string): string {
+    return { ClientFocused: 'Client Focused', TechDebt: 'Tech Debt', RAndD: 'R&D' }[cat] || cat;
+  }
 
-    catClass(cat: string): string {
-        return { ClientFocused: 'badge-blue', TechDebt: 'badge-red', RAndD: 'badge-green' }[cat] || '';
-    }
+  catClass(cat: string): string {
+    return { ClientFocused: 'badge-blue', TechDebt: 'badge-red', RAndD: 'badge-green' }[cat] || '';
+  }
 }

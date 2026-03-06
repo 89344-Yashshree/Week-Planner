@@ -105,9 +105,14 @@ public class ProgressControllerTests
             CreatedAt = DateTime.UtcNow
         };
 
-        _assignRepo.Setup(r => r.GetByIdAsync(assignment.Id)).ReturnsAsync(assignment);
-        _planRepo.Setup(r => r.GetByIdAsync(assignment.WeeklyPlanId)).ReturnsAsync(plan);
+        // Mock GetByIdForUpdateAsync for the UpdateProgressAsync path (AsNoTracking)
+        _assignRepo.Setup(r => r.GetByIdForUpdateAsync(assignment.Id)).ReturnsAsync(assignment);
+        // Mock GetStateAsync for plan state validation
+        _planRepo.Setup(r => r.GetStateAsync(assignment.WeeklyPlanId)).ReturnsAsync(WeekState.Frozen);
         _assignRepo.Setup(r => r.Update(It.IsAny<PlanAssignment>()));
+        _assignRepo.Setup(r => r.AddProgressUpdate(It.IsAny<ProgressUpdate>()));
+        // Mock GetByIdAsync for the post-update reload in the controller
+        _assignRepo.Setup(r => r.GetByIdAsync(assignment.Id)).ReturnsAsync(assignment);
 
         // UpdateProgressRequest(RequestingMemberId, HoursDone, Status enum, Notes)
         var req = new UpdateProgressRequest(memberId, 8m, AssignmentStatus.InProgress, "Good progress");

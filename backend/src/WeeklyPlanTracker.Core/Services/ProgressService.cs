@@ -22,6 +22,10 @@ public class ProgressService
     public Task<IEnumerable<PlanAssignment>> GetTeamAssignmentsAsync(Guid weeklyPlanId) =>
         _uow.PlanAssignments.GetByWeekAsync(weeklyPlanId);
 
+    /// <summary>Returns a single assignment by ID with all navigation properties loaded.</summary>
+    public Task<PlanAssignment?> GetAssignmentByIdAsync(Guid assignmentId) =>
+        _uow.PlanAssignments.GetByIdAsync(assignmentId);
+
     /// <summary>
     /// Updates progress on an assignment: sets HoursCompleted and Status,
     /// and logs a ProgressUpdate history entry.
@@ -37,26 +41,30 @@ public class ProgressService
         if (hoursDone < 0)
             throw new InvalidOperationException("Hours done cannot be negative.");
 
-        var assignment = await _uow.PlanAssignments.GetByIdAsync(assignmentId)
+        // Load assignment WITHOUT tracking to avoid change-tracker conflicts
+        // that cause DbUpdateConcurrencyException on SaveChanges.
+        var assignment = await _uow.PlanAssignments.GetByIdForUpdateAsync(assignmentId)
             ?? throw new InvalidOperationException("Assignment not found.");
 
         // Only allow the owning member to update
         if (assignment.TeamMemberId != requestingMemberId)
             throw new InvalidOperationException("You can only update progress on your own assignments.");
 
-        // Must be in Frozen state
-        var plan = await _uow.WeeklyPlans.GetByIdAsync(assignment.WeeklyPlanId)
-            ?? throw new InvalidOperationException("Associated weekly plan not found.");
-
-        if (plan.State != WeekState.Frozen)
+        // Must be in Frozen state — use lightweight query to avoid EF tracking conflicts
+        var planState = await _uow.WeeklyPlans.GetStateAsync(assignment.WeeklyPlanId);
+        if (planState == null)
+            throw new InvalidOperationException("Associated weekly plan not found.");
+        if (planState != WeekState.Frozen)
             throw new InvalidOperationException("Progress updates are only allowed while the plan is frozen.");
 
-        // Update the assignment
+        // Update the assignment fields
         assignment.HoursCompleted = hoursDone;
         assignment.Status = status;
+
+        // Explicitly mark as modified — attaches and sets state in one call
         _uow.PlanAssignments.Update(assignment);
 
-        // Log the history snapshot
+        // Log the history snapshot — add directly, not through navigation
         var update = new ProgressUpdate
         {
             PlanAssignmentId = assignmentId,
@@ -64,11 +72,12 @@ public class ProgressService
             Status = status,
             Notes = notes
         };
-
-        // ProgressUpdate has no dedicated repository — navigate via PlanAssignment
-        assignment.ProgressUpdates.Add(update);
+        _uow.PlanAssignments.AddProgressUpdate(update);
 
         await _uow.SaveChangesAsync();
+
+        // Return the assignment with the new progress entry attached for DTO mapping
+        assignment.ProgressUpdates = new List<ProgressUpdate> { update };
         return assignment;
     }
 }

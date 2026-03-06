@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -57,7 +57,8 @@ export class ManageMembersComponent implements OnInit {
     private teamService: TeamMemberService,
     private toast: ToastService,
     private confirmSvc: ConfirmService,
-    public router: Router
+    public router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -65,22 +66,28 @@ export class ManageMembersComponent implements OnInit {
   }
 
   loadMembers(): void {
-    this.teamService.getAll().subscribe(members => this.members = members);
+    this.teamService.getAll().subscribe(members => { this.members = members; this.cdr.markForCheck(); });
   }
 
   addMember(): void {
     const name = this.newName.trim();
     if (!name) return;
     this.teamService.add(name).subscribe({
-      next: m => { this.members.push(m); this.newName = ''; },
-      error: e => this.toast.show(e.error?.error || 'Failed to add member.', 'error')
+      next: m => { this.members = [...this.members, m]; this.newName = ''; this.cdr.markForCheck(); },
+      error: e => { this.toast.show(e.error?.error || 'Failed to add member.', 'error'); this.cdr.markForCheck(); }
     });
   }
 
   makeLead(member: TeamMember): void {
     this.teamService.makeLead(member.id).subscribe({
-      next: () => { this.members.forEach(m => m.role = m.id === member.id ? MemberRole.Lead : MemberRole.Member); },
-      error: e => this.toast.show(e.error?.error || 'Failed.', 'error')
+      next: () => {
+        this.members = this.members.map(m => ({
+          ...m,
+          role: m.id === member.id ? MemberRole.Lead : MemberRole.Member
+        }));
+        this.cdr.markForCheck();
+      },
+      error: e => { this.toast.show(e.error?.error || 'Failed.', 'error'); this.cdr.markForCheck(); }
     });
   }
 
@@ -96,9 +103,9 @@ export class ManageMembersComponent implements OnInit {
       next: () => {
         this.members = this.members.filter(m => m.id !== member.id);
         this.toast.show(`${member.name} has been removed.`, 'success');
+        this.cdr.markForCheck();
       },
-      error: e => this.toast.show(e.error?.error || 'Failed to remove member.', 'error')
+      error: e => { this.toast.show(e.error?.error || 'Failed to remove member.', 'error'); this.cdr.markForCheck(); }
     });
   }
 }
-

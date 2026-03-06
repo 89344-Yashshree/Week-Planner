@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -20,8 +20,8 @@ interface MenuItem {
 
 /** Home dashboard — shows context-aware menu based on week state and user role. */
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  selector: 'app-home',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-home',
     standalone: true,
     imports: [CommonModule],
     template: `
@@ -64,7 +64,8 @@ export class HomeComponent implements OnInit {
         private planService: WeeklyPlanService,
         private toast: ToastService,
         private confirmSvc: ConfirmService,
-        private router: Router
+        private router: Router,
+        private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -75,8 +76,9 @@ export class HomeComponent implements OnInit {
             next: plan => {
                 this.currentPlan = plan;
                 this.buildMenu();
+                this.cdr.markForCheck();
             },
-            error: () => this.buildMenu()
+            error: () => { this.buildMenu(); this.cdr.markForCheck(); }
         });
     }
 

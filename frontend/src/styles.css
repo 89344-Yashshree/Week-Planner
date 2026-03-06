@@ -76,6 +76,14 @@ a {
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.brand-icon {
+  width: 24px;
+  height: 24px;
 }
 
 .navbar-links {
@@ -93,6 +101,7 @@ a {
   color: var(--text-muted);
   cursor: pointer;
   font-size: .9rem;
+  text-decoration: none;
 }
 
 .nav-link:hover {

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { WeeklyPlanService } from '../../core/services/weekly-plan.service';
@@ -89,11 +89,12 @@ export class PastWeeksComponent implements OnInit {
     private planService: WeeklyPlanService,
     private dataService: DataService,
     private toast: ToastService,
-    public router: Router
+    public router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    this.planService.getPast().subscribe(p => this.plans = p);
+    this.planService.getPast().subscribe(p => { this.plans = p; this.cdr.markForCheck(); });
   }
 
   toggle(i: number): void {

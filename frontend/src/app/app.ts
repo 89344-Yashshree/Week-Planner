@@ -28,6 +28,10 @@ export class App implements OnInit {
   isDark = true;
   toasts: Toast[] = [];
 
+  get isSetupOrLogin(): boolean {
+    return this.router.url.includes('/setup') || this.router.url.includes('/login');
+  }
+
   constructor(
     public auth: AuthService,
     public toastService: ToastService,
@@ -101,6 +105,7 @@ export class App implements OnInit {
     if (!ok) return;
     this.dataService.reset().subscribe({
       next: () => {
+        this.auth.logout();
         this.toastService.show('App has been reset.', 'warning');
         this.router.navigate(['/setup']);
       },

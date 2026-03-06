@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -71,14 +71,15 @@ export class BacklogListComponent implements OnInit {
     private backlogService: BacklogService,
     private toast: ToastService,
     private confirmSvc: ConfirmService,
-    public router: Router
+    public router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.backlogService.getAll(this.includeArchived, this.activeCategory, this.search)
-      .subscribe(items => this.items = items);
+      .subscribe(items => { this.items = items; this.cdr.markForCheck(); });
   }
 
   toggleCategory(cat: BacklogCategory): void {
@@ -95,8 +96,8 @@ export class BacklogListComponent implements OnInit {
     });
     if (!ok) return;
     this.backlogService.archive(item.id).subscribe({
-      next: () => { this.items = this.items.filter(i => i.id !== item.id); this.toast.show('Backlog item archived.'); },
-      error: e => this.toast.show(e.error?.error || 'Failed.', 'error')
+      next: () => { this.items = this.items.filter(i => i.id !== item.id); this.toast.show('Backlog item archived.'); this.cdr.markForCheck(); },
+      error: e => { this.toast.show(e.error?.error || 'Failed.', 'error'); this.cdr.markForCheck(); }
     });
   }
 

@@ -1,4 +1,4 @@
 export const environment = {
     production: false,
-    apiUrl: 'https://weekplanner-api.azurewebsites.net/api'
+    apiUrl: 'http://localhost:5037/api'
 };

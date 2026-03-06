@@ -20,10 +20,22 @@ import { ConfirmDialogComponent } from './core/components/confirm-dialog.compone
 
       <!-- ── Global Confirm Dialog ─────────────────────────── -->
       <app-confirm-dialog/>
-      <nav class="navbar" *ngIf="user">
-        <span class="navbar-brand">📅 Week Planner</span>
+
+      <!-- Simplified navbar for setup/login pages -->
+      <nav class="navbar" *ngIf="isSetupOrLogin">
+        <span class="navbar-brand"><img src="favicon.svg" alt="" class="brand-icon"/> Weekly Planner</span>
+        <div class="navbar-right">
+          <button class="btn btn-sm btn-outline" (click)="toggleTheme()" id="setup-theme-toggle">
+            {{ isDark ? 'Light Mode' : 'Dark Mode' }}
+          </button>
+        </div>
+      </nav>
+
+      <!-- Full navbar (logged in, not on setup/login) -->
+      <nav class="navbar" *ngIf="user && !isSetupOrLogin">
+        <span class="navbar-brand"><img src="favicon.svg" alt="" class="brand-icon"/> Weekly Planner</span>
         <div class="navbar-links">
-          <a (click)="router.navigate(['/home'])" class="nav-link" id="nav-home">🏠 Home</a>
+          <a (click)="router.navigate(['/home'])" class="nav-link" id="nav-home">Home</a>
           <a (click)="router.navigate(['/backlog'])" class="nav-link" id="nav-backlog">Backlog</a>
           <a *ngIf="isLead" (click)="router.navigate(['/manage-members'])" class="nav-link" id="nav-team">Team</a>
           <a (click)="router.navigate(['/past-weeks'])" class="nav-link" id="nav-past">Past Weeks</a>
@@ -45,8 +57,8 @@ import { ConfirmDialogComponent } from './core/components/confirm-dialog.compone
         <router-outlet/>
       </main>
 
-      <!-- ── Footer Utility Bar ───────────────────────── -->
-      <footer class="footer-bar" *ngIf="!router.url.includes('/setup')">
+      <!-- ── Footer Utility Bar (hidden on setup/login) ───────────────────────── -->
+      <footer class="footer-bar" *ngIf="user && !isSetupOrLogin">
         <button class="btn btn-outline" id="footer-download-btn" (click)="downloadData()">📥 Download My Data</button>
         <button class="btn btn-outline" id="footer-load-btn" (click)="fileInput.click()">📤 Load Data from File</button>
         <input #fileInput type="file" accept=".json" style="display:none"
@@ -76,6 +88,10 @@ export class AppComponent implements OnInit {
   isLead = false;
   isDark = true;
   toasts: Toast[] = [];
+
+  get isSetupOrLogin(): boolean {
+    return this.router.url.includes('/setup') || this.router.url.includes('/login');
+  }
 
   constructor(
     public auth: AuthService,
@@ -140,6 +156,7 @@ export class AppComponent implements OnInit {
   private doReset(): void {
     this.dataService.reset().subscribe({
       next: () => {
+        this.auth.logout();
         this.toastService.show('App has been reset.', 'warning');
         this.router.navigate(['/setup']);
       },

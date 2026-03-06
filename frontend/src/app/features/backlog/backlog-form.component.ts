@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -68,7 +68,8 @@ export class BacklogFormComponent implements OnInit {
     private toast: ToastService,
     private confirmSvc: ConfirmService,
     private route: ActivatedRoute,
-    public router: Router
+    public router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -82,6 +83,7 @@ export class BacklogFormComponent implements OnInit {
           category: item.category,
           estimatedHours: item.estimatedHours
         };
+        this.cdr.markForCheck();
       });
     }
   }

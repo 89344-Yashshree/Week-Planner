@@ -1,4 +1,5 @@
 using WeeklyPlanTracker.Core.Entities;
+using WeeklyPlanTracker.Core.Enums;
 
 namespace WeeklyPlanTracker.Core.Interfaces;
 
@@ -10,6 +11,8 @@ public interface IWeeklyPlanRepository
     Task<WeeklyPlan?> GetByIdAsync(Guid id);
     Task<IEnumerable<WeeklyPlan>> GetCompletedAsync();
     Task<bool> HasActivePlanAsync();
+    /// <summary>Returns only the State of the plan with the given ID, without loading navigation properties.</summary>
+    Task<WeekState?> GetStateAsync(Guid id);
     void Add(WeeklyPlan plan);
     void Update(WeeklyPlan plan);
     void Remove(WeeklyPlan plan);

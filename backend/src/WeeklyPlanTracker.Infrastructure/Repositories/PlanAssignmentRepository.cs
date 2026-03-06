@@ -22,6 +22,7 @@ public class PlanAssignmentRepository : IPlanAssignmentRepository
     public async Task<IEnumerable<PlanAssignment>> GetByMemberAndWeekAsync(Guid teamMemberId, Guid weeklyPlanId) =>
         await _ctx.PlanAssignments
             .Include(a => a.BacklogItem)
+            .Include(a => a.TeamMember)
             .Include(a => a.ProgressUpdates)
             .Where(a => a.WeeklyPlanId == weeklyPlanId && a.TeamMemberId == teamMemberId)
             .ToListAsync();
@@ -30,6 +31,11 @@ public class PlanAssignmentRepository : IPlanAssignmentRepository
         _ctx.PlanAssignments
             .Include(a => a.BacklogItem)
             .Include(a => a.ProgressUpdates)
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+    public Task<PlanAssignment?> GetByIdForUpdateAsync(Guid id) =>
+        _ctx.PlanAssignments
+            .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id);
 
     public Task<PlanAssignment?> GetByMemberItemAndWeekAsync(Guid teamMemberId, Guid backlogItemId, Guid weeklyPlanId) =>
@@ -47,4 +53,5 @@ public class PlanAssignmentRepository : IPlanAssignmentRepository
     public void Add(PlanAssignment assignment) => _ctx.PlanAssignments.Add(assignment);
     public void Update(PlanAssignment assignment) => _ctx.PlanAssignments.Update(assignment);
     public void Remove(PlanAssignment assignment) => _ctx.PlanAssignments.Remove(assignment);
+    public void AddProgressUpdate(Core.Entities.ProgressUpdate update) => _ctx.ProgressUpdates.Add(update);
 }

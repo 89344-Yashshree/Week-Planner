@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,9 +16,9 @@ import { BacklogCategory } from '../../core/enums/enums';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-plan-work',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="page-container">
       <button class="btn btn-back" (click)="router.navigate(['/home'])">← Home</button>
       <h1>Plan My Work</h1>
@@ -106,6 +106,7 @@ import { BacklogCategory } from '../../core/enums/enums';
             <span class="badge" [ngClass]="catClass(selectedItem.category)">{{ catLabel(selectedItem.category) }}</span>
           </p>
           <p>Your hours left: <strong>{{ 30 - committedHours }}</strong></p>
+          <p>{{ catLabel(selectedItem.category) }} budget left: <strong>{{ categoryBudgetLeft(selectedItem.category) }}h</strong></p>
           <p>Estimate for this item: {{ selectedItem.estimatedHours }}h. You can enter any amount.</p>
           <div class="form-group">
             <label for="commit-hours">Hours to commit</label>
@@ -121,90 +122,129 @@ import { BacklogCategory } from '../../core/enums/enums';
   `
 })
 export class PlanWorkComponent implements OnInit {
-    plan?: WeeklyPlan;
-    myAssignments: PlanAssignment[] = [];
-    availableItems: BacklogItem[] = [];
-    showPicker = false;
-    selectedItem: BacklogItem | null = null;
-    commitHours = 1;
-    Cat = BacklogCategory;
-    allAssignments: PlanAssignment[] = [];
+  plan?: WeeklyPlan;
+  myAssignments: PlanAssignment[] = [];
+  availableItems: BacklogItem[] = [];
+  showPicker = false;
+  selectedItem: BacklogItem | null = null;
+  commitHours = 1;
+  Cat = BacklogCategory;
+  allAssignments: PlanAssignment[] = [];
+  allWeekAssignments: PlanAssignment[] = [];
 
-    constructor(
-        private planService: WeeklyPlanService,
-        private assignmentService: PlanAssignmentService,
-        private backlogService: BacklogService,
-        private auth: AuthService,
-        private toast: ToastService,
-        public router: Router
-    ) { }
+  constructor(
+    private planService: WeeklyPlanService,
+    private assignmentService: PlanAssignmentService,
+    private backlogService: BacklogService,
+    private auth: AuthService,
+    private toast: ToastService,
+    public router: Router,
+    private cdr: ChangeDetectorRef
+  ) { }
 
-    get committedHours(): number {
-        return this.myAssignments.reduce((sum, a) => sum + a.committedHours, 0);
-    }
+  get committedHours(): number {
+    return this.myAssignments.reduce((sum, a) => sum + a.committedHours, 0);
+  }
 
-    ngOnInit(): void {
-        this.planService.getCurrent().subscribe(plan => {
-            if (!plan) { this.router.navigate(['/home']); return; }
-            this.plan = plan;
-            this.loadAssignments();
-            this.backlogService.getAll(false).subscribe(items => this.availableItems = items);
-        });
-    }
+  ngOnInit(): void {
+    this.planService.getCurrent().subscribe(plan => {
+      if (!plan) { this.router.navigate(['/home']); return; }
+      this.plan = plan;
+      this.loadAssignments();
+      this.loadAllWeekAssignments();
+      this.backlogService.getAll(false).subscribe(items => { this.availableItems = items; this.cdr.markForCheck(); });
+      this.cdr.markForCheck();
+    });
+  }
 
-    loadAssignments(): void {
-        if (!this.plan || !this.auth.currentUser) return;
-        this.assignmentService.getAssignments(this.plan.id, this.auth.currentUser.id)
-            .subscribe(a => this.myAssignments = a);
-    }
+  loadAssignments(): void {
+    if (!this.plan || !this.auth.currentUser) return;
+    this.assignmentService.getAssignments(this.plan.id, this.auth.currentUser.id)
+      .subscribe(a => { this.myAssignments = a; this.cdr.markForCheck(); });
+  }
 
-    categoryClaimed(cat: BacklogCategory): number {
-        return this.myAssignments
-            .filter(a => a.backlogItemCategory === cat)
-            .reduce((sum, a) => sum + a.committedHours, 0);
-    }
+  /** Load all assignments for the week (team-wide) to calculate category budget usage. */
+  loadAllWeekAssignments(): void {
+    if (!this.plan) return;
+    // Load each member's assignments to get team-wide totals
+    this.allWeekAssignments = [];
+    const members = this.plan.selectedMembers;
+    let loaded = 0;
+    members.forEach(m => {
+      this.assignmentService.getAssignments(this.plan!.id, m.id).subscribe(a => {
+        this.allWeekAssignments.push(...a);
+        loaded++;
+        if (loaded === members.length) this.cdr.markForCheck();
+      });
+    });
+  }
 
-    categoryPercent(cat: BacklogCategory, budget: number): number {
-        if (!budget) return 0;
-        return Math.min(100, (this.categoryClaimed(cat) / budget) * 100);
-    }
+  categoryClaimed(cat: BacklogCategory): number {
+    return this.myAssignments
+      .filter(a => a.backlogItemCategory === cat)
+      .reduce((sum, a) => sum + a.committedHours, 0);
+  }
 
-    pickItem(item: BacklogItem): void {
-        this.selectedItem = item;
-        this.commitHours = 1;
-        this.showPicker = false;
-    }
+  /** Team-wide category usage for budget validation display. */
+  teamCategoryClaimed(cat: BacklogCategory): number {
+    return this.allWeekAssignments
+      .filter(a => a.backlogItemCategory === cat)
+      .reduce((sum, a) => sum + a.committedHours, 0);
+  }
 
-    addToPlan(): void {
-        if (!this.plan || !this.auth.currentUser || !this.selectedItem) return;
-        this.assignmentService.add({
-            weeklyPlanId: this.plan.id,
-            teamMemberId: this.auth.currentUser.id,
-            backlogItemId: this.selectedItem.id,
-            committedHours: this.commitHours
-        }).subscribe({
-            next: a => {
-                this.toast.show(`Added! ${this.selectedItem?.title} — ${this.commitHours}h`);
-                this.myAssignments.push(a);
-                this.selectedItem = null;
-            },
-            error: e => this.toast.show(e.error?.error || 'Failed to add item.', 'error')
-        });
-    }
+  /** Category budget remaining (team-wide) for the modal. */
+  categoryBudgetLeft(cat: string): number {
+    if (!this.plan) return 0;
+    const budget = cat === 'ClientFocused' ? this.plan.clientFocusedBudgetHours
+      : cat === 'TechDebt' ? this.plan.techDebtBudgetHours
+        : cat === 'RAndD' ? this.plan.rAndDBudgetHours : 0;
+    const catEnum = cat as BacklogCategory;
+    return budget - this.teamCategoryClaimed(catEnum);
+  }
 
-    removeAssignment(a: PlanAssignment): void {
-        if (!this.auth.currentUser) return;
-        this.assignmentService.remove(a.id, this.auth.currentUser.id).subscribe({
-            next: () => { this.myAssignments = this.myAssignments.filter(x => x.id !== a.id); },
-            error: e => this.toast.show(e.error?.error || 'Failed to remove.', 'error')
-        });
-    }
+  categoryPercent(cat: BacklogCategory, budget: number): number {
+    if (!budget) return 0;
+    return Math.min(100, (this.categoryClaimed(cat) / budget) * 100);
+  }
 
-    catLabel(cat: string): string {
-        return { ClientFocused: 'Client Focused', TechDebt: 'Tech Debt', RAndD: 'R&D' }[cat] || cat;
-    }
+  pickItem(item: BacklogItem): void {
+    this.selectedItem = item;
+    this.commitHours = 1;
+    this.showPicker = false;
+  }
 
-    catClass(cat: string): string {
-        return { ClientFocused: 'badge-blue', TechDebt: 'badge-red', RAndD: 'badge-green' }[cat] || '';
-    }
+  addToPlan(): void {
+    if (!this.plan || !this.auth.currentUser || !this.selectedItem) return;
+    this.assignmentService.add({
+      weeklyPlanId: this.plan.id,
+      teamMemberId: this.auth.currentUser.id,
+      backlogItemId: this.selectedItem.id,
+      committedHours: this.commitHours
+    }).subscribe({
+      next: a => {
+        this.toast.show(`Added! ${this.selectedItem?.title} — ${this.commitHours}h`);
+        this.myAssignments = [...this.myAssignments, a];
+        this.allWeekAssignments = [...this.allWeekAssignments, a];
+        this.selectedItem = null;
+        this.cdr.markForCheck();
+      },
+      error: e => { this.toast.show(e.error?.error || 'Failed to add item.', 'error'); this.cdr.markForCheck(); }
+    });
+  }
+
+  removeAssignment(a: PlanAssignment): void {
+    if (!this.auth.currentUser) return;
+    this.assignmentService.remove(a.id, this.auth.currentUser.id).subscribe({
+      next: () => { this.myAssignments = this.myAssignments.filter(x => x.id !== a.id); this.cdr.markForCheck(); },
+      error: e => { this.toast.show(e.error?.error || 'Failed to remove.', 'error'); this.cdr.markForCheck(); }
+    });
+  }
+
+  catLabel(cat: string): string {
+    return { ClientFocused: 'Client Focused', TechDebt: 'Tech Debt', RAndD: 'R&D' }[cat] || cat;
+  }
+
+  catClass(cat: string): string {
+    return { ClientFocused: 'badge-blue', TechDebt: 'badge-red', RAndD: 'badge-green' }[cat] || '';
+  }
 }

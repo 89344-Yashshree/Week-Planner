@@ -3,11 +3,21 @@
   <!-- Global Confirm Dialog -->
   <app-confirm-dialog />
 
-  <!-- Navbar -->
-  <nav class="navbar" *ngIf="user">
-    <span class="navbar-brand">📅 Week Planner</span>
+  <!-- Simplified navbar for setup/login pages -->
+  <nav class="navbar" *ngIf="isSetupOrLogin">
+    <span class="navbar-brand"><img src="favicon.svg" alt="" class="brand-icon" /> Weekly Planner</span>
+    <div class="navbar-right">
+      <button class="btn btn-sm btn-outline" (click)="toggleTheme()" id="setup-theme-toggle">
+        {{ isDark ? 'Light Mode' : 'Dark Mode' }}
+      </button>
+    </div>
+  </nav>
+
+  <!-- Full navbar (logged in, not on setup/login) -->
+  <nav class="navbar" *ngIf="user && !isSetupOrLogin">
+    <span class="navbar-brand"><img src="favicon.svg" alt="" class="brand-icon" /> Weekly Planner</span>
     <div class="navbar-links">
-      <a (click)="router.navigate(['/home'])" class="nav-link" id="nav-home">🏠 Home</a>
+      <a (click)="router.navigate(['/home'])" class="nav-link" id="nav-home">Home</a>
       <a (click)="router.navigate(['/backlog'])" class="nav-link" id="nav-backlog">Backlog</a>
       <a *ngIf="isLead" (click)="router.navigate(['/manage-members'])" class="nav-link" id="nav-team">Team</a>
       <a (click)="router.navigate(['/past-weeks'])" class="nav-link" id="nav-past">Past Weeks</a>
@@ -17,7 +27,7 @@
       <span class="badge" [class.badge-lead]="isLead" [class.badge-member]="!isLead">
         {{ isLead ? 'Lead' : 'Member' }}
       </span>
-      <button class="btn btn-sm btn-secondary" (click)="logout()" id="switch-user-btn">🔄 Switch</button>
+      <button class="btn btn-sm btn-secondary" (click)="logout()" id="switch-user-btn">Switch User</button>
       <button class="btn btn-sm btn-outline" (click)="toggleTheme()" id="theme-toggle-btn">
         {{ isDark ? 'Light Mode' : 'Dark Mode' }}
       </button>
@@ -29,8 +39,8 @@
     <router-outlet />
   </main>
 
-  <!-- Footer Utility Bar (hidden on /setup) -->
-  <footer class="footer-bar" *ngIf="!router.url.includes('/setup')">
+  <!-- Footer Utility Bar (hidden on setup/login) -->
+  <footer class="footer-bar" *ngIf="user && !isSetupOrLogin">
     <button class="btn btn-outline" id="footer-download-btn" (click)="downloadData()">📥 Download My Data</button>
     <button class="btn btn-outline" id="footer-load-btn" (click)="fileInput.click()">📤 Load Data from File</button>
     <input #fileInput type="file" accept=".json" style="display:none" (change)="onFileSelected($event)"

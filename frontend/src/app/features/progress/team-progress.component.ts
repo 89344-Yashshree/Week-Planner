@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ProgressService, TeamProgressDto } from '../../core/services/progress.service';
@@ -127,13 +127,14 @@ export class TeamProgressComponent implements OnInit {
   constructor(
     private progressService: ProgressService,
     private planService: WeeklyPlanService,
-    public router: Router
+    public router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
     this.planService.getCurrent().subscribe(plan => {
       if (!plan) return;
-      this.progressService.getTeamProgress(plan.id).subscribe(p => this.progress = p);
+      this.progressService.getTeamProgress(plan.id).subscribe(p => { this.progress = p; this.cdr.markForCheck(); });
     });
   }
 

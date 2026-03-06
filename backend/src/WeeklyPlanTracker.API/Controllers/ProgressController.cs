@@ -81,19 +81,18 @@ public class ProgressController : ControllerBase
         Guid assignmentId,
         [FromBody] UpdateProgressRequest req)
     {
-        var assignment = await _progressService.UpdateProgressAsync(
+        await _progressService.UpdateProgressAsync(
             assignmentId, req.RequestingMemberId, req.HoursDone, req.Status, req.Notes);
-        return Ok(PlanAssignmentsController.MapToDto(assignment));
+        // Reload the full entity with nav properties so the DTO has populated fields
+        var full = await _progressService.GetAssignmentByIdAsync(assignmentId);
+        return Ok(PlanAssignmentsController.MapToDto(full!));
     }
 
     // GET /api/progress/{assignmentId}/history
     [HttpGet("{assignmentId:guid}/history")]
     public async Task<ActionResult<IEnumerable<ProgressUpdateDto>>> GetHistory(Guid assignmentId)
     {
-        var assignments = await _progressService.GetTeamAssignmentsAsync(Guid.Empty);
-        // Retrieve directly via PlanAssignment
-        var allPlanAssignments = assignments.ToList();
-        var target = allPlanAssignments.FirstOrDefault(a => a.Id == assignmentId);
+        var target = await _progressService.GetAssignmentByIdAsync(assignmentId);
         if (target is null) return NotFound();
 
         var history = target.ProgressUpdates

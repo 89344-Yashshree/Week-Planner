@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, Inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit, Inject } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,11 +15,7 @@ import { MemberRole } from '../../core/enums/enums';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="page-container">
-      <div class="card setup-card" style="position:relative">
-        <button class="btn btn-sm btn-outline" (click)="toggleTheme()" id="setup-theme-toggle"
-                style="position:absolute;top:1rem;right:1rem">
-          {{ isDark ? 'Light Mode' : 'Dark Mode' }}
-        </button>
+      <div class="card setup-card">
         <h1>Welcome! Set up your team to start planning.</h1>
         <p class="subtitle">Add the people on your team. Pick one person as the Team Lead.</p>
 
@@ -64,6 +60,7 @@ export class TeamSetupComponent implements OnInit {
     private teamService: TeamMemberService,
     private toast: ToastService,
     private router: Router,
+    private cdr: ChangeDetectorRef,
     @Inject(DOCUMENT) private document: Document
   ) { }
 
@@ -72,6 +69,7 @@ export class TeamSetupComponent implements OnInit {
   ngOnInit(): void {
     this.teamService.getAll().subscribe(members => {
       this.members = members;
+      this.cdr.markForCheck();
       if (members.length > 0) {
         // If team already configured, go to login
         this.router.navigate(['/login']);
@@ -84,19 +82,30 @@ export class TeamSetupComponent implements OnInit {
     if (!name) return;
     this.teamService.add(name).subscribe({
       next: m => {
-        this.members.push(m);
+        this.members = [...this.members, m];
         this.newName = '';
+        this.cdr.markForCheck();
       },
-      error: e => this.toast.show(e.error?.error || 'Failed to add member.', 'error')
+      error: e => {
+        this.toast.show(e.error?.error || 'Failed to add member.', 'error');
+        this.cdr.markForCheck();
+      }
     });
   }
 
   makeLead(member: TeamMember): void {
     this.teamService.makeLead(member.id).subscribe({
       next: () => {
-        this.members.forEach(m => m.role = m.id === member.id ? MemberRole.Lead : MemberRole.Member);
+        this.members = this.members.map(m => ({
+          ...m,
+          role: m.id === member.id ? MemberRole.Lead : MemberRole.Member
+        }));
+        this.cdr.markForCheck();
       },
-      error: e => this.toast.show(e.error?.error || 'Failed to update.', 'error')
+      error: e => {
+        this.toast.show(e.error?.error || 'Failed to update.', 'error');
+        this.cdr.markForCheck();
+      }
     });
   }
 

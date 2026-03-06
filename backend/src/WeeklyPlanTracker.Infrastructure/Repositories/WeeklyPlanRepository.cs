@@ -45,6 +45,16 @@ public class WeeklyPlanRepository : IWeeklyPlanRepository
     public Task<bool> HasActivePlanAsync() =>
         _ctx.WeeklyPlans.AnyAsync(p => p.State != WeekState.Completed);
 
+    public async Task<WeekState?> GetStateAsync(Guid id)
+    {
+        var result = await _ctx.WeeklyPlans
+            .AsNoTracking()
+            .Where(p => p.Id == id)
+            .Select(p => (WeekState?)p.State)
+            .FirstOrDefaultAsync();
+        return result;
+    }
+
     public void Add(WeeklyPlan plan) => _ctx.WeeklyPlans.Add(plan);
     public void Update(WeeklyPlan plan) => _ctx.WeeklyPlans.Update(plan);
     public void Remove(WeeklyPlan plan) => _ctx.WeeklyPlans.Remove(plan);
