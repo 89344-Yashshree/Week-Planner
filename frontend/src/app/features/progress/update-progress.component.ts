@@ -21,6 +21,29 @@ import { AssignmentStatus } from '../../core/enums/enums';
       <button class="btn btn-back" (click)="router.navigate(['/home'])">← Home</button>
       <h1>Update My Progress</h1>
 
+      <div class="loading-container" *ngIf="loading">
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+        Loading your assignments…
+      </div>
+
+      <div *ngIf="!loading">
+      <!-- Circular overall progress -->
+      <div class="circular-progress">
+        <div class="progress-ring-container">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle class="progress-ring-bg" cx="45" cy="45" r="38" stroke-width="7"/>
+            <circle class="progress-ring-fill" cx="45" cy="45" r="38" stroke-width="7"
+                    [attr.stroke-dasharray]="238.76"
+                    [attr.stroke-dashoffset]="totalCommitted > 0 ? 238.76 - (238.76 * (totalDone / totalCommitted)) : 238.76"/>
+          </svg>
+          <span class="progress-ring-text">{{ totalCommitted > 0 ? (totalDone / totalCommitted * 100 | number:'1.0-0') : 0 }}%</span>
+        </div>
+        <div class="progress-details">
+          <span class="progress-title">Overall Progress</span>
+          <span class="progress-subtitle">{{ totalDone }}h done of {{ totalCommitted }}h committed</span>
+        </div>
+      </div>
+
       <div class="hours-bar">
         Committed: <strong>{{ totalCommitted }}h</strong>. Currently: <strong>{{ totalDone }}h</strong> done.
         <span class="warning-text" *ngIf="totalDone > totalCommitted">
@@ -56,6 +79,7 @@ import { AssignmentStatus } from '../../core/enums/enums';
 
         <p class="empty-state" *ngIf="assignments.length === 0">You have no assigned tasks this week.</p>
       </div>
+      </div>
     </div>
   `
 })
@@ -64,6 +88,7 @@ export class UpdateProgressComponent implements OnInit {
   progressMap: Record<string, { hours: number; status: AssignmentStatus }> = {};
   plan?: WeeklyPlan;
   Status = AssignmentStatus;
+  loading = true;
 
   constructor(
     private progressService: ProgressService,
@@ -86,6 +111,7 @@ export class UpdateProgressComponent implements OnInit {
         this.assignments.forEach(a => {
           this.progressMap[a.id] = { hours: a.hoursCompleted, status: a.status };
         });
+        this.loading = false;
         this.cdr.markForCheck();
       });
     });

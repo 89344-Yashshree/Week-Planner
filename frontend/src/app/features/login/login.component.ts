@@ -14,6 +14,12 @@ import { MemberRole } from '../../core/enums/enums';
   imports: [CommonModule],
   template: `
     <div class="page-container login-page">
+      <div class="loading-container" *ngIf="loading">
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+        Loading team members…
+      </div>
+
+      <div *ngIf="!loading">
       <h1 class="login-title">Who are you?</h1>
       <p class="subtitle">Click your name to get started.</p>
 
@@ -30,12 +36,14 @@ import { MemberRole } from '../../core/enums/enums';
           </span>
         </div>
       </div>
+      </div>
     </div>
   `
 })
 export class LoginComponent implements OnInit {
   members: TeamMember[] = [];
   Role = MemberRole;
+  loading = true;
 
   constructor(
     private teamService: TeamMemberService,
@@ -48,10 +56,11 @@ export class LoginComponent implements OnInit {
     this.teamService.getAll().subscribe({
       next: members => {
         this.members = members;
+        this.loading = false;
         this.cdr.markForCheck();
         if (members.length === 0) this.router.navigate(['/setup']);
       },
-      error: () => this.router.navigate(['/setup'])
+      error: () => { this.loading = false; this.router.navigate(['/setup']); }
     });
   }
 

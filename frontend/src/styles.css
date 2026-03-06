@@ -335,6 +335,15 @@ button:disabled,
   color: var(--text-muted);
 }
 
+.badge-archived {
+  background: rgba(239, 68, 68, .15);
+  color: var(--red);
+}
+
+.archived-row {
+  opacity: .6;
+}
+
 /* ── Status badges ───────────────────────────────────────────────────────── */
 .status-badge {
   padding: .15rem .5rem;
@@ -430,6 +439,124 @@ button:disabled,
   background: var(--primary);
   border-radius: 99px;
   transition: width .4s ease;
+}
+
+/* ── Loading bar (indeterminate) ─────────────────────────────────────────── */
+.loading-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.loading-bar .loading-bar-fill {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, var(--primary), #818cf8, var(--primary));
+  border-radius: 4px;
+  animation: loading-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 1rem;
+  color: var(--text-muted);
+  font-size: .95rem;
+}
+
+.loading-container .loading-bar {
+  width: 200px;
+}
+
+/* ── Circular progress ring ──────────────────────────────────────────────── */
+.circular-progress {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+
+.progress-ring-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.progress-ring-container svg {
+  transform: rotate(-90deg);
+  display: block;
+}
+
+.progress-ring-bg {
+  fill: none;
+  stroke: var(--border);
+}
+
+.progress-ring-fill {
+  fill: none;
+  stroke: var(--primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset .6s ease;
+}
+
+.progress-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: .85rem;
+  color: var(--primary);
+}
+
+.circular-progress .progress-details {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.circular-progress .progress-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.circular-progress .progress-subtitle {
+  color: var(--text-muted);
+  font-size: .88rem;
+}
+
+/* Small circular progress (inline in cards) */
+.progress-ring-sm {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.progress-ring-sm svg {
+  transform: rotate(-90deg);
+  display: block;
+}
+
+.progress-ring-sm .progress-ring-text {
+  font-size: .7rem;
 }
 
 /* ── Home menu grid ──────────────────────────────────────────────────────── */

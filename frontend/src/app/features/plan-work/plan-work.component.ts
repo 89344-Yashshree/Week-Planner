@@ -23,8 +23,27 @@ import { BacklogCategory } from '../../core/enums/enums';
       <button class="btn btn-back" (click)="router.navigate(['/home'])">← Home</button>
       <h1>Plan My Work</h1>
 
+      <div class="loading-bar" *ngIf="loading"><div class="loading-bar-fill"></div></div>
+
+      <!-- Circular personal hours progress -->
+      <div class="circular-progress" *ngIf="!loading">
+        <div class="progress-ring-container">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle class="progress-ring-bg" cx="45" cy="45" r="38" stroke-width="7"/>
+            <circle class="progress-ring-fill" cx="45" cy="45" r="38" stroke-width="7"
+                    [attr.stroke-dasharray]="238.76"
+                    [attr.stroke-dashoffset]="238.76 - (238.76 * (committedHours / 30))"/>
+          </svg>
+          <span class="progress-ring-text">{{ committedHours }}/30</span>
+        </div>
+        <div class="progress-details">
+          <span class="progress-title">My Hours</span>
+          <span class="progress-subtitle">{{ committedHours }} of 30h planned · {{ 30 - committedHours }}h left</span>
+        </div>
+      </div>
+
       <!-- Personal hours summary -->
-      <div class="hours-bar">
+      <div class="hours-bar" *ngIf="!loading">
         Your hours: <strong>{{ committedHours }} of 30</strong> planned.
         <strong>{{ 30 - committedHours }}</strong> hours left.
       </div>
@@ -131,6 +150,7 @@ export class PlanWorkComponent implements OnInit {
   Cat = BacklogCategory;
   allAssignments: PlanAssignment[] = [];
   allWeekAssignments: PlanAssignment[] = [];
+  loading = true;
 
   constructor(
     private planService: WeeklyPlanService,
@@ -152,7 +172,7 @@ export class PlanWorkComponent implements OnInit {
       this.plan = plan;
       this.loadAssignments();
       this.loadAllWeekAssignments();
-      this.backlogService.getAll(false).subscribe(items => { this.availableItems = items; this.cdr.markForCheck(); });
+      this.backlogService.getAll(false).subscribe(items => { this.availableItems = items; this.loading = false; this.cdr.markForCheck(); });
       this.cdr.markForCheck();
     });
   }

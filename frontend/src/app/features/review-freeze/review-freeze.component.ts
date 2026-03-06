@@ -22,6 +22,8 @@ interface MemberReview { member: TeamMember; hoursPlanned: number; assignments: 
       <h1>Review the Team's Plan</h1>
       <p class="subtitle" *ngIf="plan">Week of {{ plan.planningDate }}. {{ plan.memberCount }} team members. {{ plan.totalHours }} total hours.</p>
 
+      <div class="loading-bar" *ngIf="loading"><div class="loading-bar-fill"></div></div>
+
       <!-- Category Summary Table -->
       <h3>Category Summary</h3>
       <table class="summary-table" *ngIf="plan">
@@ -59,6 +61,15 @@ interface MemberReview { member: TeamMember; hoursPlanned: number; assignments: 
       <div class="member-review-list">
         <div class="member-review-card" *ngFor="let mr of memberReviews">
           <div class="member-review-header" (click)="mr.expanded = !mr.expanded">
+            <div class="progress-ring-sm">
+              <svg width="44" height="44" viewBox="0 0 44 44">
+                <circle class="progress-ring-bg" cx="22" cy="22" r="18" stroke-width="4"/>
+                <circle class="progress-ring-fill" cx="22" cy="22" r="18" stroke-width="4"
+                        [attr.stroke-dasharray]="113.1"
+                        [attr.stroke-dashoffset]="113.1 - (113.1 * Math.min(1, mr.hoursPlanned / 30))"/>
+              </svg>
+              <span class="progress-ring-text">{{ mr.hoursPlanned }}</span>
+            </div>
             <strong>{{ mr.member.name }}</strong>
             <span [class.valid-text]="mr.hoursPlanned === 30" [class.error-text]="mr.hoursPlanned !== 30">
               {{ mr.hoursPlanned }} / 30h
@@ -94,6 +105,7 @@ export class ReviewFreezeComponent implements OnInit {
   memberReviews: MemberReview[] = [];
   freezeErrors: string[] = [];
   Math = Math;
+  loading = true;
 
   constructor(
     private planService: WeeklyPlanService,
@@ -127,6 +139,7 @@ export class ReviewFreezeComponent implements OnInit {
         this.memberReviews.push({ member: m, hoursPlanned: hours, assignments, expanded: false });
         loaded++;
         if (loaded === members.length) {
+          this.loading = false;
           this.loadValidation();
           this.cdr.markForCheck();
         }

@@ -26,6 +26,12 @@ interface MenuItem {
     imports: [CommonModule],
     template: `
     <div class="page-container">
+      <div class="loading-container" *ngIf="loading">
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+        Loading your dashboard…
+      </div>
+
+      <div *ngIf="!loading">
       <div class="home-header">
         <h1>What do you want to do?</h1>
         <p class="subtitle">
@@ -49,6 +55,7 @@ interface MenuItem {
           </div>
         </div>
       </div>
+      </div>
     </div>
   `
 })
@@ -58,6 +65,7 @@ export class HomeComponent implements OnInit {
     menuItems: MenuItem[] = [];
     statusMessage = '';
     isLead = false;
+    loading = true;
 
     constructor(
         private auth: AuthService,
@@ -76,9 +84,10 @@ export class HomeComponent implements OnInit {
             next: plan => {
                 this.currentPlan = plan;
                 this.buildMenu();
+                this.loading = false;
                 this.cdr.markForCheck();
             },
-            error: () => { this.buildMenu(); this.cdr.markForCheck(); }
+            error: () => { this.loading = false; this.buildMenu(); this.cdr.markForCheck(); }
         });
     }
 
