@@ -56,14 +56,14 @@ Setup ──► PlanningOpen ──► Frozen ──► Completed
 
 ## Getting Started
 
-## Prerequisites
+**Prerequisites**
 
 - [Node.js 20+](https://nodejs.org/)
 - [Angular CLI](https://angular.dev/) — `npm install -g @angular/cli`
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) *(for backend only)*
 - SQL Server *(optional — falls back to in-memory DB if not configured)*
 
-## Run Frontend
+**Run Frontend**
 
 ```bash
 cd frontend
@@ -73,7 +73,7 @@ ng serve
 
 App opens at `http://localhost:4200`. All data is stored in your browser's localStorage.
 
-## Run Backend
+**Run Backend**
 
 ```bash
 cd backend
