@@ -1,8 +1,9 @@
 # Weekly Plan Tracker
 
-> **Live App:** [https://nice-ocean-00beb6100.6.azurestaticapps.net](https://nice-ocean-00beb6100.6.azurestaticapps.net)
+> **Live App:** [https://weekplannerapp.z29.web.core.windows.net](https://weekplannerapp.z29.web.core.windows.net)
 
 A full-stack weekly planning application that helps engineering teams manage sprint cycles, distribute backlog items across team members, allocate effort by category (Client-Focused, Tech Debt, R&D), and track daily progress — all with a structured week lifecycle. Built with .NET 8 and Angular 21, deployed on Microsoft Azure.
+
 ---
 
 ## Features
